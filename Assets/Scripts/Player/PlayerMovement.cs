@@ -78,6 +78,7 @@ public class PlayerMovement : MonoBehaviour
     private void Jump()
     {
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        AudioManager.Instance.PlaySound("PlayerJump");
     }
 
     private void WallJump()
@@ -88,6 +89,7 @@ public class PlayerMovement : MonoBehaviour
 
     private System.Collections.IEnumerator Dash()
     {
+        AudioManager.Instance.PlaySound("PlayerDash");
         canDash = false;
         isDashing = true;
         float originalGravity = rb.gravityScale;

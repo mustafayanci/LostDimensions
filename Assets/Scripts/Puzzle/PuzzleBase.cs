@@ -31,6 +31,7 @@ public abstract class PuzzleBase : MonoBehaviour, IDimensionAware
         if (isSolved) return;
         
         isSolved = true;
+        AudioManager.Instance.PlaySound("PuzzleSolved");
         onPuzzleSolved?.Invoke();
     }
 
