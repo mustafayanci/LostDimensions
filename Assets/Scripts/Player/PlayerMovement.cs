@@ -72,18 +72,18 @@ public class PlayerMovement : MonoBehaviour
     private void Move()
     {
         float targetVelocityX = horizontalInput * moveSpeed;
-        rb.velocity = new Vector2(targetVelocityX, rb.velocity.y);
+        rb.linearVelocity = new Vector2(targetVelocityX, rb.linearVelocity.y);
     }
 
     private void Jump()
     {
-        rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
     }
 
     private void WallJump()
     {
         float wallJumpDirection = -Mathf.Sign(horizontalInput);
-        rb.velocity = new Vector2(wallJumpDirection * wallJumpForce, jumpForce);
+        rb.linearVelocity = new Vector2(wallJumpDirection * wallJumpForce, jumpForce);
     }
 
     private System.Collections.IEnumerator Dash()
@@ -93,7 +93,7 @@ public class PlayerMovement : MonoBehaviour
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0;
         
-        rb.velocity = new Vector2(transform.localScale.x * dashForce, 0);
+        rb.linearVelocity = new Vector2(transform.localScale.x * dashForce, 0);
         
         yield return new WaitForSeconds(dashDuration);
         

@@ -13,7 +13,7 @@ public class ChaserEnemy : EnemyBase
 
         if (distance > stopDistance)
         {
-            rb.velocity = direction * chaseSpeed;
+            rb.linearVelocity = direction * chaseSpeed;
             // Düşmanın yönünü çevir
             transform.localScale = new Vector3(
                 direction.x > 0 ? -1 : 1,
@@ -23,7 +23,7 @@ public class ChaserEnemy : EnemyBase
         }
         else
         {
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
         }
     }
 } 

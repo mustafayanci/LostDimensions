@@ -29,7 +29,7 @@ public class PatrolEnemy : EnemyBase
         Vector2 targetPosition = patrolPoints[currentPoint].position;
         Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
         
-        rb.velocity = direction * moveSpeed;
+        rb.linearVelocity = direction * moveSpeed;
 
         // Düşmanın yönünü çevir
         transform.localScale = new Vector3(
@@ -50,6 +50,6 @@ public class PatrolEnemy : EnemyBase
         // Oyuncu tespit edildiğinde devriye gezmeyi durdur ve oyuncuya saldır
         isWaiting = false;
         Vector2 direction = (player.position - transform.position).normalized;
-        rb.velocity = direction * (moveSpeed * 1.5f);
+        rb.linearVelocity = direction * (moveSpeed * 1.5f);
     }
 } 
