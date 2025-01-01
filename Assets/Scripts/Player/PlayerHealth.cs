@@ -3,28 +3,44 @@ using UnityEngine.Events;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [SerializeField] private int maxHealth = 3;
+    [Header("Health Settings")]
+    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float currentHealth;
     [SerializeField] private float invincibilityDuration = 1f;
     
-    public UnityEvent<int> onHealthChanged;
-    public UnityEvent onPlayerDeath;
+    [Header("Events")]
+    public UnityEvent onDeath;
+    public UnityEvent<float> onHealthChanged;
     
-    private int currentHealth;
     private bool isInvincible;
-    private SpriteRenderer spriteRenderer;
+    private float invincibilityTimer;
 
-    private void Awake()
+    private void Start()
     {
         currentHealth = maxHealth;
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        onHealthChanged?.Invoke(currentHealth / maxHealth);
     }
 
-    public void TakeDamage(int damage)
+    private void Update()
+    {
+        if (isInvincible)
+        {
+            invincibilityTimer -= Time.deltaTime;
+            if (invincibilityTimer <= 0)
+            {
+                isInvincible = false;
+            }
+        }
+    }
+
+    public void TakeDamage(float damage)
     {
         if (isInvincible) return;
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
-        onHealthChanged?.Invoke(currentHealth);
+        onHealthChanged?.Invoke(currentHealth / maxHealth);
+        
+        AudioManager.Instance.PlaySound("PlayerHurt");
 
         if (currentHealth <= 0)
         {
@@ -32,29 +48,30 @@ public class PlayerHealth : MonoBehaviour
         }
         else
         {
-            StartCoroutine(InvincibilityRoutine());
+            StartInvincibility();
         }
+    }
+
+    public void RestoreHealth(float amount = -1)
+    {
+        if (amount < 0) amount = maxHealth;
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        onHealthChanged?.Invoke(currentHealth / maxHealth);
+        
+        AudioManager.Instance.PlaySound("HealthPickup");
+    }
+
+    private void StartInvincibility()
+    {
+        isInvincible = true;
+        invincibilityTimer = invincibilityDuration;
     }
 
     private void Die()
     {
-        onPlayerDeath?.Invoke();
-        // Ölüm animasyonu ve yeniden başlatma mantığı buraya gelecek
-    }
-
-    private System.Collections.IEnumerator InvincibilityRoutine()
-    {
-        isInvincible = true;
-        float elapsedTime = 0f;
-        
-        while (elapsedTime < invincibilityDuration)
-        {
-            spriteRenderer.enabled = !spriteRenderer.enabled;
-            yield return new WaitForSeconds(0.1f);
-            elapsedTime += 0.1f;
-        }
-        
-        spriteRenderer.enabled = true;
-        isInvincible = false;
+        onDeath?.Invoke();
+        GameManager.Instance.GameOver();
+        AudioManager.Instance.PlaySound("PlayerDeath");
+        gameObject.SetActive(false);
     }
 } 
