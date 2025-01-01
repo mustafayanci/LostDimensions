@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.Events;
+using Interfaces;
 
 namespace Player
 {
-    public class PlayerHealth : MonoBehaviour
+    public class PlayerHealth : MonoBehaviour, IPlayer
     {
         [Header("Health Settings")]
         [SerializeField] private float maxHealth = 100f;
