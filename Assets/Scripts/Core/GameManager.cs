@@ -34,70 +34,45 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
-        if (Input.GetButtonDown("Pause") && CurrentState == GameState.Playing)
         {
-            PauseGame();
+            TogglePause();
         }
-    }
-
-    public void StartGame()
-    {
-        ChangeState(GameState.Playing);
-        LevelManager.Instance.LoadFirstLevel();
     }
 
     public void PauseGame()
     {
-        if (CurrentState == GameState.Playing)
+        isPaused = true;
+        Time.timeScale = 0;
+        if (uiManager != null)
         {
-            ChangeState(GameState.Paused);
-            Time.timeScale = 0;
-            UIManager.Instance.ShowPauseMenu(true);
+            uiManager.ShowPauseMenu(true);
         }
     }
 
     public void ResumeGame()
     {
-        if (CurrentState == GameState.Paused)
+        isPaused = false;
+        Time.timeScale = 1;
+        if (uiManager != null)
         {
-            ChangeState(GameState.Playing);
-            Time.timeScale = 1;
-            UIManager.Instance.ShowPauseMenu(false);
+            uiManager.ShowPauseMenu(false);
         }
     }
 
     public void GameOver()
     {
-        if (CurrentState == GameState.GameOver) return;
-        
-        ChangeState(GameState.GameOver);
-        StartCoroutine(GameOverRoutine());
-    }
-
-    private System.Collections.IEnumerator GameOverRoutine()
-    {
-        yield return new WaitForSeconds(gameOverDelay);
-        UIManager.Instance.ShowGameOver();
         Time.timeScale = 0;
+        if (uiManager != null)
+        {
+            uiManager.ShowGameOver();
+        }
     }
 
-    public void RestartLevel()
+    private void TogglePause()
     {
-        Time.timeScale = 1;
-        ChangeState(GameState.Playing);
-        LevelManager.Instance.ReloadCurrentLevel();
-    }
-
-    public void QuitToMenu()
-    {
-        Time.timeScale = 1;
-        ChangeState(GameState.MainMenu);
-        LevelManager.Instance.LoadMainMenu();
-    }
-
-    private void ChangeState(GameState newState)
-    {
-        CurrentState = newState;
-        onGameStateChanged?.Invoke(newState);
+        if (isPaused)
+            ResumeGame();
+        else
+            PauseGame();
     }
 } 
