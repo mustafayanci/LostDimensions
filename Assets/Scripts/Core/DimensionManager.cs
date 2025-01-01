@@ -4,21 +4,15 @@ using System.Collections.Generic;
 public class DimensionManager : MonoBehaviour
 {
     public static DimensionManager Instance { get; private set; }
-    
-    [System.Serializable]
-    public class DimensionData
-    {
-        public int dimensionId;
-        public Vector2 gravity;
-        public Color ambientColor;
-        public float timeScale;
-    }
 
-    [SerializeField] private List<DimensionData> dimensions;
-    [SerializeField] private float transitionDuration = 1f;
+    [Header("Dimension Settings")]
+    [SerializeField] private int currentDimension = 0;
+    [SerializeField] private int maxDimensions = 4;
+    [SerializeField] private float dimensionChangeDelay = 0.5f;
     
-    private int currentDimensionId;
-    
+    private bool canChangeDimension = true;
+    private List<IDimensionAware> dimensionAwareObjects = new List<IDimensionAware>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -32,53 +26,66 @@ public class DimensionManager : MonoBehaviour
         }
     }
 
-    public void ChangeDimension(int newDimensionId)
+    public void RegisterDimensionAware(IDimensionAware obj)
     {
-        if (newDimensionId == currentDimensionId) return;
-        
-        DimensionData newDimension = dimensions.Find(d => d.dimensionId == newDimensionId);
-        if (newDimension == null) return;
-
-        StartCoroutine(TransitionToDimension(newDimension));
+        if (!dimensionAwareObjects.Contains(obj))
+        {
+            dimensionAwareObjects.Add(obj);
+            obj.OnDimensionChanged(currentDimension);
+        }
     }
 
-    private System.Collections.IEnumerator TransitionToDimension(DimensionData newDimension)
+    public void UnregisterDimensionAware(IDimensionAware obj)
     {
+        dimensionAwareObjects.Remove(obj);
+    }
+
+    public void ChangeDimension(int newDimension)
+    {
+        if (!canChangeDimension || newDimension == currentDimension || 
+            newDimension < 0 || newDimension >= maxDimensions)
+            return;
+
+        StartCoroutine(ChangeDimensionRoutine(newDimension));
+    }
+
+    private System.Collections.IEnumerator ChangeDimensionRoutine(int newDimension)
+    {
+        canChangeDimension = false;
+
         // Geçiş efektini başlat
-        float elapsedTime = 0;
-        DimensionData oldDimension = dimensions.Find(d => d.dimensionId == currentDimensionId);
+        TransitionManager.Instance.PlayDimensionTransition(newDimension);
+        AudioManager.Instance.PlaySound($"DimensionChange_{newDimension}");
 
-        while (elapsedTime < transitionDuration)
+        yield return new WaitForSeconds(dimensionChangeDelay);
+
+        // Boyut değişimini uygula
+        currentDimension = newDimension;
+        foreach (var obj in dimensionAwareObjects)
         {
-            float t = elapsedTime / transitionDuration;
-            
-            // Yerçekimi değişimi
-            Physics2D.gravity = Vector2.Lerp(oldDimension.gravity, newDimension.gravity, t);
-            
-            // Renk değişimi
-            RenderSettings.ambientLight = Color.Lerp(oldDimension.ambientColor, newDimension.ambientColor, t);
-            
-            // Zaman ölçeği değişimi
-            Time.timeScale = Mathf.Lerp(oldDimension.timeScale, newDimension.timeScale, t);
-            
-            elapsedTime += Time.unscaledDeltaTime;
-            yield return null;
+            obj.OnDimensionChanged(currentDimension);
         }
 
-        currentDimensionId = newDimension.dimensionId;
+        // UI'ı güncelle
+        UIManager.Instance.UpdateDimensionDisplay(currentDimension);
+
+        yield return new WaitForSeconds(dimensionChangeDelay);
         
-        // Boyut değişimi olayını bildir
-        OnDimensionChanged(newDimension.dimensionId);
+        canChangeDimension = true;
     }
 
-    private void OnDimensionChanged(int dimensionId)
+    public void SetAvailableDimensions(int count)
     {
-        // Boyut değişimi olayını dinleyen tüm nesneleri bilgilendir
-        var dimensionObjects = FindObjectsOfType<MonoBehaviour>().OfType<IDimensionAware>();
-        foreach (var obj in dimensionObjects)
+        maxDimensions = Mathf.Clamp(count, 1, 4);
+        if (currentDimension >= maxDimensions)
         {
-            obj.OnDimensionChanged(dimensionId);
+            ChangeDimension(0);
         }
+    }
+
+    public int GetCurrentDimension()
+    {
+        return currentDimension;
     }
 }
 

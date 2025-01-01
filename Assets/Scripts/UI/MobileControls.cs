@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 public class MobileControls : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private Joystick moveJoystick;
+    [SerializeField] private SimpleJoystick moveJoystick;
     [SerializeField] private Button jumpButton;
     [SerializeField] private Button dashButton;
     
@@ -35,7 +35,6 @@ public class MobileControls : MonoBehaviour
     {
         if (playerMovement != null)
         {
-            // Joystick değerlerini oyuncu hareketine aktar
             float horizontalInput = moveJoystick.Horizontal;
             playerMovement.SetHorizontalInput(horizontalInput);
         }
@@ -43,7 +42,7 @@ public class MobileControls : MonoBehaviour
 
     private void ChangeDimension()
     {
-        currentDimension = (currentDimension + 1) % 4; // 4 boyut varsayılıyor
+        currentDimension = (currentDimension + 1) % 4;
         dimensionManager.ChangeDimension(currentDimension);
     }
 } 
