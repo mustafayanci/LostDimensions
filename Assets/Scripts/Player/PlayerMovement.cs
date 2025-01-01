@@ -47,7 +47,15 @@ public class PlayerMovement : MonoBehaviour, IPlayerMovement
     private void FixedUpdate()
     {
         if (isDashing) return;
+        
         Move();
+        
+        if (jumpInput && isGrounded)
+        {
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            AudioManager.Instance.PlaySound("PlayerJump");
+            jumpInput = false;
+        }
     }
 
     private void CheckEnvironment()

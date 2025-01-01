@@ -13,7 +13,7 @@ public class HealthPickup : MonoBehaviour, IDimensionAware
             var playerHealth = other.GetComponent<IPlayer>();
             if (playerHealth != null)
             {
-                playerHealth.RestoreHealth(-1);
+                playerHealth.RestoreHealth(healAmount);
                 Destroy(gameObject);
             }
         }
