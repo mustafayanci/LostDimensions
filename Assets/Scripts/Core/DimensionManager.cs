@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections.Generic;
 
 public class DimensionManager : MonoBehaviour
@@ -12,6 +13,8 @@ public class DimensionManager : MonoBehaviour
     private int currentDimension;
     private int availableDimensions = 1;
     private readonly List<IDimensionAware> dimensionAwareObjects = new();
+
+    public UnityEvent<int> onDimensionChanged = new UnityEvent<int>();
 
     private void Awake()
     {
@@ -50,6 +53,7 @@ public class DimensionManager : MonoBehaviour
             {
                 obj.OnDimensionChanged(currentDimension);
             }
+            onDimensionChanged?.Invoke(currentDimension);
         }
     }
 
