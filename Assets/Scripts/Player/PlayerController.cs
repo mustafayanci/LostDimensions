@@ -23,6 +23,9 @@ public class PlayerController : MonoBehaviour
     private bool jumpInput;
     private bool dashInput;
 
+    public bool IsGrounded => isGrounded;
+    public bool IsDashing => isDashing;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();

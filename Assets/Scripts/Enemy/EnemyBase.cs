@@ -5,6 +5,7 @@ public abstract class EnemyBase : MonoBehaviour
     [Header("Base Settings")]
     [SerializeField] protected float health = 100f;
     [SerializeField] protected float damage = 20f;
+    [SerializeField] protected float moveSpeed = 5f;
     [SerializeField] protected float detectionRange = 5f;
     [SerializeField] protected LayerMask playerLayer;
 
