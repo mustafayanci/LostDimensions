@@ -1,34 +1,25 @@
 using UnityEngine;
 
-public class ChaserEnemy : MonoBehaviour, IDimensionAware
+public class ChaserEnemy : EnemyBase
 {
-    [Header("Movement")]
-    [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float detectionRange = 10f;
+    [Header("Chaser Settings")]
+    [SerializeField] private float chaseSpeed = 4f;
+    [SerializeField] private float stopDistance = 0.5f;
     
-    [Header("Dimension Settings")]
-    [SerializeField] private int[] activeDimensions;
-    
-    private Transform player;
-    private Rigidbody2D rb;
-    private bool isActive = true;
-
-    private void Start()
+    protected override void OnPlayerDetected()
     {
-        rb = GetComponent<Rigidbody2D>();
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        DimensionManager.Instance.RegisterDimensionAware(this);
-    }
-
-    private void Update()
-    {
-        if (!isActive || player == null) return;
-
+        Vector2 direction = (player.position - transform.position).normalized;
         float distance = Vector2.Distance(transform.position, player.position);
-        if (distance <= detectionRange)
+
+        if (distance > stopDistance)
         {
-            Vector2 direction = (player.position - transform.position).normalized;
-            rb.velocity = direction * moveSpeed;
+            rb.velocity = direction * chaseSpeed;
+            // Düşmanın yönünü çevir
+            transform.localScale = new Vector3(
+                direction.x > 0 ? -1 : 1,
+                1,
+                1
+            );
         }
         else
         {
@@ -36,17 +27,8 @@ public class ChaserEnemy : MonoBehaviour, IDimensionAware
         }
     }
 
-    public void OnDimensionChanged(int dimensionId)
+    protected override void OnPlayerLost()
     {
-        isActive = System.Array.Exists(activeDimensions, d => d == dimensionId);
-        gameObject.SetActive(isActive);
-    }
-
-    private void OnDestroy()
-    {
-        if (DimensionManager.Instance != null)
-        {
-            DimensionManager.Instance.UnregisterDimensionAware(this);
-        }
+        rb.velocity = Vector2.zero;
     }
 } 
