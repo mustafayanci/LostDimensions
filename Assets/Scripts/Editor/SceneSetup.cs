@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
+using Player;
 
 public class SceneSetup
 {
@@ -65,16 +66,26 @@ public class SceneSetup
     {
         var player = new GameObject("Player");
         player.tag = "Player";
-        player.AddComponent<PlayerController>();
+        
+        // Player bileşenlerini ekle
+        player.AddComponent<PlayerMovement>();
         player.AddComponent<PlayerHealth>();
         player.AddComponent<PlayerCombat>();
         player.AddComponent<PlayerAnimator>();
+        player.AddComponent<PlayerDimensionController>();
+        
+        // Fizik bileşenlerini ekle
         player.AddComponent<BoxCollider2D>();
-        player.AddComponent<Rigidbody2D>().gravityScale = 3f;
+        var rb = player.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 3f;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-        // Add sprite renderer
+        // Sprite renderer ekle
         var spriteRenderer = player.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Player/player_idle.png");
+        
+        // Player'ı başlangıç pozisyonuna yerleştir
+        player.transform.position = new Vector3(0, 0, 0);
     }
 
     private static void CreateEnvironment()
