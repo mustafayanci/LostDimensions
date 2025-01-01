@@ -72,6 +72,25 @@ public class UISetup
         slider.minValue = 0;
         slider.maxValue = 1;
         slider.value = 1;
+
+        // Background
+        var background = new GameObject("Background", typeof(Image));
+        background.transform.SetParent(healthBar.transform, false);
+        background.GetComponent<Image>().color = Color.gray;
+
+        // Fill Area
+        var fillArea = new GameObject("Fill Area", typeof(RectTransform));
+        fillArea.transform.SetParent(healthBar.transform, false);
+        
+        // Fill
+        var fill = new GameObject("Fill", typeof(Image));
+        fill.transform.SetParent(fillArea.transform, false);
+        fill.GetComponent<Image>().color = Color.red;
+
+        // Setup references
+        slider.fillRect = fill.GetComponent<RectTransform>();
+        slider.handleRect = null;
+        slider.targetGraphic = null;
     }
 
     private static void CreateDimensionDisplay(Transform parent)

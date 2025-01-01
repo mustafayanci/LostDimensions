@@ -9,6 +9,9 @@ public class SceneSetup
     [MenuItem("Tools/Setup/Create Initial Scene")]
     public static void CreateMainScene()
     {
+        // Ensure project structure exists
+        ProjectSetup.CreateFolderStructure();
+
         // Save current scene
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
             return;

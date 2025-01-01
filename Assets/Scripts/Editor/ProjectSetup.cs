@@ -2,43 +2,75 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 
-public class ProjectSetup : Editor
+public class ProjectSetup
 {
-    [MenuItem("Game/Setup Project Structure")]
-    public static void SetupProjectStructure()
+    [MenuItem("Tools/Setup/Create Folder Structure")]
+    public static void CreateFolderStructure()
     {
-        string[] folders = new string[]
+        CreateFolders(new string[]
         {
-            "Animations",
-            "Audio/Music",
-            "Audio/SFX",
-            "Materials",
-            "Prefabs/Core",
-            "Prefabs/Player",
-            "Prefabs/Enemies",
-            "Prefabs/Puzzles",
-            "Prefabs/UI",
-            "Scenes",
-            "Scripts/Core",
-            "Scripts/Editor",
-            "Scripts/Enemy",
-            "Scripts/Level",
-            "Scripts/Player",
-            "Scripts/Puzzle",
-            "Scripts/UI",
-            "Sprites"
-        };
+            "Assets/Art",
+            "Assets/Art/Player",
+            "Assets/Art/Environment",
+            "Assets/Art/UI",
+            "Assets/Audio",
+            "Assets/Audio/Music",
+            "Assets/Audio/SFX",
+            "Assets/Prefabs",
+            "Assets/Scenes",
+            "Assets/Materials"
+        });
 
+        CreateDefaultAssets();
+        AssetDatabase.Refresh();
+    }
+
+    private static void CreateFolders(string[] folders)
+    {
         foreach (var folder in folders)
         {
-            string fullPath = Path.Combine(Application.dataPath, folder);
-            if (!Directory.Exists(fullPath))
+            if (!AssetDatabase.IsValidFolder(folder))
             {
-                Directory.CreateDirectory(fullPath);
+                string parentPath = Path.GetDirectoryName(folder);
+                string newFolderName = Path.GetFileName(folder);
+                AssetDatabase.CreateFolder(parentPath, newFolderName);
             }
         }
-        
-        AssetDatabase.Refresh();
-        Debug.Log("Project structure created successfully!");
+    }
+
+    private static void CreateDefaultAssets()
+    {
+        // Create default sprites
+        CreateDefaultSprite("Assets/Art/Player/player_idle.png");
+        CreateDefaultSprite("Assets/Art/Environment/ground.png");
+    }
+
+    private static void CreateDefaultSprite(string path)
+    {
+        if (!File.Exists(path))
+        {
+            // Create a simple white texture
+            var tex = new Texture2D(32, 32);
+            var colors = new Color[32 * 32];
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = Color.white;
+            tex.SetPixels(colors);
+            tex.Apply();
+
+            // Save as PNG
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes(path, bytes);
+            
+            // Set texture import settings
+            AssetDatabase.ImportAsset(path);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spritePixelsPerUnit = 32;
+                importer.filterMode = FilterMode.Point;
+                importer.SaveAndReimport();
+            }
+        }
     }
 } 
