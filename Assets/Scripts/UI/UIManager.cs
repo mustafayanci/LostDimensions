@@ -6,19 +6,18 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("HUD Elements")]
-    [SerializeField] private GameObject hudPanel;
-    [SerializeField] private TextMeshProUGUI healthText;
-    [SerializeField] private Image[] healthIcons;
-    [SerializeField] private TextMeshProUGUI dimensionText;
-    
-    [Header("Menu Panels")]
+    [Header("Panels")]
     [SerializeField] private GameObject pausePanel;
     [SerializeField] private GameObject gameOverPanel;
-    [SerializeField] private GameObject dimensionTransitionPanel;
+    [SerializeField] private CanvasGroup transitionPanel;
 
-    [Header("Animation")]
-    [SerializeField] private Animator transitionAnimator;
+    [Header("HUD Elements")]
+    [SerializeField] private Slider healthBar;
+    [SerializeField] private TextMeshProUGUI dimensionText;
+    [SerializeField] private GameObject[] dimensionIcons;
+
+    [Header("Settings")]
+    [SerializeField] private float transitionSpeed = 2f;
     
     private void Awake()
     {
@@ -33,41 +32,99 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void UpdateHealth(int currentHealth)
+    private void Start()
     {
-        healthText.text = $"HP: {currentHealth}";
-        
-        for (int i = 0; i < healthIcons.Length; i++)
+        HideAllPanels();
+    }
+
+    public void UpdateHealthBar(float healthPercentage)
+    {
+        if (healthBar != null)
         {
-            healthIcons[i].enabled = i < currentHealth;
+            healthBar.value = healthPercentage;
         }
     }
 
     public void UpdateDimensionDisplay(int dimensionId)
     {
-        dimensionText.text = $"Dimension: {dimensionId}";
-        StartCoroutine(PlayDimensionTransition());
-    }
+        if (dimensionText != null)
+        {
+            string[] dimensionNames = { "Normal", "Fire", "Nature", "Shadow" };
+            dimensionText.text = dimensionId < dimensionNames.Length ? dimensionNames[dimensionId] : "Unknown";
+        }
 
-    private System.Collections.IEnumerator PlayDimensionTransition()
-    {
-        dimensionTransitionPanel.SetActive(true);
-        transitionAnimator.SetTrigger("StartTransition");
-        
-        yield return new WaitForSeconds(1f);
-        
-        dimensionTransitionPanel.SetActive(false);
+        // Dimension ikonlarını güncelle
+        for (int i = 0; i < dimensionIcons.Length; i++)
+        {
+            if (dimensionIcons[i] != null)
+            {
+                dimensionIcons[i].SetActive(i == dimensionId);
+            }
+        }
     }
 
     public void ShowPauseMenu(bool show)
     {
-        pausePanel.SetActive(show);
-        Time.timeScale = show ? 0f : 1f;
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(show);
+        }
     }
 
     public void ShowGameOver()
     {
-        gameOverPanel.SetActive(true);
-        hudPanel.SetActive(false);
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+    }
+
+    public void ShowTransition(bool show)
+    {
+        if (transitionPanel != null)
+        {
+            StopAllCoroutines();
+            StartCoroutine(FadeTransition(show ? 1 : 0));
+        }
+    }
+
+    private System.Collections.IEnumerator FadeTransition(float targetAlpha)
+    {
+        while (!Mathf.Approximately(transitionPanel.alpha, targetAlpha))
+        {
+            transitionPanel.alpha = Mathf.MoveTowards(
+                transitionPanel.alpha,
+                targetAlpha,
+                Time.deltaTime * transitionSpeed
+            );
+            yield return null;
+        }
+    }
+
+    private void HideAllPanels()
+    {
+        if (pausePanel != null) pausePanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (transitionPanel != null) transitionPanel.alpha = 0;
+    }
+
+    // UI Button Events
+    public void OnResumeClicked()
+    {
+        GameManager.Instance.ResumeGame();
+    }
+
+    public void OnRestartClicked()
+    {
+        GameManager.Instance.RestartLevel();
+    }
+
+    public void OnQuitClicked()
+    {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
     }
 } 
