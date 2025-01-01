@@ -24,15 +24,15 @@ public class PlayerAnimator : MonoBehaviour
     private void Update()
     {
         // Hareket yönüne göre sprite'ı çevir
-        if (rb.velocity.x != 0)
+        if (rb.linearVelocity.x != 0)
         {
-            spriteRenderer.flipX = rb.velocity.x < 0;
+            spriteRenderer.flipX = rb.linearVelocity.x < 0;
         }
 
         // Animator parametrelerini güncelle
         animator.SetBool(IsGrounded, controller.IsGrounded);
-        animator.SetBool(IsRunning, Mathf.Abs(rb.velocity.x) > 0.1f);
-        animator.SetFloat(VerticalVelocity, rb.velocity.y);
+        animator.SetBool(IsRunning, Mathf.Abs(rb.linearVelocity.x) > 0.1f);
+        animator.SetFloat(VerticalVelocity, rb.linearVelocity.y);
         animator.SetBool(IsDashing, controller.IsDashing);
     }
 

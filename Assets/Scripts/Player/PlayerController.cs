@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Movement
-        rb.velocity = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
+        rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
 
         // Jump
         if (jumpInput && isGrounded)
@@ -81,7 +81,7 @@ public class PlayerController : MonoBehaviour
     {
         if (dashTimeLeft > 0)
         {
-            rb.velocity = new Vector2(transform.localScale.x * dashSpeed, 0);
+            rb.linearVelocity = new Vector2(transform.localScale.x * dashSpeed, 0);
             dashTimeLeft -= Time.fixedDeltaTime;
         }
         else

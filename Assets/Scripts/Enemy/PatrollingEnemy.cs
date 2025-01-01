@@ -50,7 +50,7 @@ public class PatrollingEnemy : EnemyBase
         Vector2 targetPoint = patrolPoints[currentPointIndex].position;
         Vector2 moveDirection = (targetPoint - (Vector2)transform.position).normalized;
         
-        rb.velocity = moveDirection * patrolSpeed;
+        rb.linearVelocity = moveDirection * patrolSpeed;
 
         // Düşmanın yönünü çevir
         transform.localScale = new Vector3(
@@ -64,7 +64,7 @@ public class PatrollingEnemy : EnemyBase
             currentPointIndex = (currentPointIndex + 1) % patrolPoints.Length;
             isWaiting = true;
             waitTimer = waitTime;
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
         }
     }
 

@@ -31,7 +31,7 @@ public class ChaserEnemy : EnemyBase
         if (!isChasing) return;
 
         Vector2 direction = ((Vector2)player.position - (Vector2)transform.position).normalized;
-        rb.velocity = direction * chaseSpeed;
+        rb.linearVelocity = direction * chaseSpeed;
 
         // Düşmanın yönünü çevir
         transform.localScale = new Vector3(

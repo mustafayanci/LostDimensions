@@ -29,7 +29,7 @@ public class RangedEnemy : EnemyBase
             var rb = projectile.GetComponent<Rigidbody2D>();
             if (rb != null)
             {
-                rb.velocity = direction * projectileSpeed;
+                rb.linearVelocity = direction * projectileSpeed;
             }
 
             var projectileComponent = projectile.GetComponent<EnemyProjectile>();
