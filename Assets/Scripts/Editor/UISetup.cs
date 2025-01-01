@@ -125,4 +125,65 @@ public class UISetup : Editor
         
         return button;
     }
+
+    private static GameObject CreateHealthBar(GameObject parent)
+    {
+        var healthBarObj = CreatePanel(parent, "HealthBar");
+        var rect = healthBarObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(20, -20);
+        rect.sizeDelta = new Vector2(200, 20);
+
+        var slider = healthBarObj.AddComponent<Slider>();
+        slider.minValue = 0;
+        slider.maxValue = 1;
+        slider.value = 1;
+
+        var background = CreatePanel(healthBarObj, "Background");
+        var fill = CreatePanel(healthBarObj, "Fill");
+        
+        slider.targetGraphic = background.GetComponent<Image>();
+        slider.fillRect = fill.GetComponent<RectTransform>();
+        
+        return healthBarObj;
+    }
+
+    private static GameObject CreateDimensionDisplay(GameObject parent)
+    {
+        var dimensionObj = new GameObject("DimensionDisplay");
+        dimensionObj.transform.SetParent(parent.transform, false);
+        
+        var rect = dimensionObj.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.anchoredPosition = new Vector2(-20, -20);
+        rect.sizeDelta = new Vector2(200, 30);
+
+        var tmp = dimensionObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = "Dimension: 0";
+        tmp.alignment = TextAlignmentOptions.Right;
+        tmp.fontSize = 24;
+        
+        return dimensionObj;
+    }
+
+    private static GameObject CreateScoreDisplay(GameObject parent)
+    {
+        var scoreObj = new GameObject("ScoreDisplay");
+        scoreObj.transform.SetParent(parent.transform, false);
+        
+        var rect = scoreObj.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1);
+        rect.anchorMax = new Vector2(0.5f, 1);
+        rect.anchoredPosition = new Vector2(0, -20);
+        rect.sizeDelta = new Vector2(200, 30);
+
+        var tmp = scoreObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = "Score: 0";
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.fontSize = 24;
+        
+        return scoreObj;
+    }
 } 
