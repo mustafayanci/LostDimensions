@@ -1,18 +1,31 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class DimensionAudioController : MonoBehaviour, IDimensionAware
 {
-    [SerializeField] private string[] dimensionChangeSounds;
-    
+    private AudioSource audioSource;
+    private int currentDimension;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        DimensionManager.Instance.RegisterDimensionAware(this);
+    }
+
     public void OnDimensionChanged(int dimensionId)
     {
-        // Boyut değişim sesini çal
-        if (dimensionId < dimensionChangeSounds.Length)
+        if (currentDimension != dimensionId)
         {
-            AudioManager.Instance.PlaySound(dimensionChangeSounds[dimensionId]);
+            currentDimension = dimensionId;
+            AudioManager.Instance.PlayDimensionMusic(dimensionId);
         }
-        
-        // Boyutun müziğini çal
-        AudioManager.Instance.PlayDimensionMusic(dimensionId);
+    }
+
+    private void OnDestroy()
+    {
+        if (DimensionManager.Instance != null)
+        {
+            DimensionManager.Instance.UnregisterDimensionAware(this);
+        }
     }
 } 

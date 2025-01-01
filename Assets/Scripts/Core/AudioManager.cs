@@ -25,6 +25,11 @@ public class AudioManager : MonoBehaviour
     
     private Dictionary<string, Sound> soundDictionary = new Dictionary<string, Sound>();
 
+    [Header("Dimension Music")]
+    [SerializeField] private AudioClip[] dimensionMusic;
+    private AudioSource musicSource;
+    private int currentMusicIndex = -1;
+
     private void Awake()
     {
         if (Instance == null)
@@ -84,5 +89,26 @@ public class AudioManager : MonoBehaviour
     public void SetSFXVolume(float volume)
     {
         audioMixer.SetFloat("SFXVolume", Mathf.Log10(volume) * 20);
+    }
+
+    private void Start()
+    {
+        // Müzik için ayrı bir AudioSource oluştur
+        musicSource = gameObject.AddComponent<AudioSource>();
+        musicSource.outputAudioMixerGroup = soundDictionary["Music"].mixerGroup;
+        musicSource.loop = true;
+    }
+
+    public void PlayDimensionMusic(int dimensionId)
+    {
+        if (dimensionId < 0 || dimensionId >= dimensionMusic.Length) return;
+        if (currentMusicIndex == dimensionId) return;
+
+        currentMusicIndex = dimensionId;
+        if (musicSource != null)
+        {
+            musicSource.clip = dimensionMusic[dimensionId];
+            musicSource.Play();
+        }
     }
 } 
