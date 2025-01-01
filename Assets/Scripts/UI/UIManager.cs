@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class UIManager : MonoBehaviour
+public class UIManager : MonoBehaviour, IUIManager
 {
     public static UIManager Instance { get; private set; }
 

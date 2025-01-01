@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private bool isPaused;
     
-    private UIManager uiManager;
+    private IUIManager uiManager;
 
     private void Awake()
     {
@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
 
     private void InitializeManagers()
     {
-        uiManager = FindObjectOfType<UIManager>();
+        uiManager = FindObjectOfType<MonoBehaviour>() as IUIManager;
         if (uiManager == null)
         {
             Debug.LogError("UIManager not found in scene!");
