@@ -8,6 +8,7 @@ public class DimensionManager : MonoBehaviour
 
     [SerializeField] private int startingDimension = 0;
     [SerializeField] private int maxDimensions = 4;
+    public int MaxDimensions => maxDimensions;
 
     private int currentDimension;
     private int availableDimensions = 1;

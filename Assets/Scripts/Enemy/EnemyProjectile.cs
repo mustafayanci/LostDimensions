@@ -1,4 +1,5 @@
 using UnityEngine;
+using Player;  // PlayerHealth namespace'i için
 
 public class EnemyProjectile : MonoBehaviour
 {
