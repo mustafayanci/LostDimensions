@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEditor;
-using UnityEditor.Audio;
 
 public class AudioSetup
 {
@@ -19,21 +18,44 @@ public class AudioSetup
             return;
         }
 
-        // Create mixer through the audio mixer template
-        AudioMixerController mixer = AudioMixerController.CreateDefaultAudioMixer();
-        AssetDatabase.CreateAsset(mixer, path);
+        // Ensure the Audio directory exists
+        if (!AssetDatabase.IsValidFolder("Assets/Audio"))
+        {
+            AssetDatabase.CreateFolder("Assets", "Audio");
+        }
 
-        // Create groups
-        var masterGroup = mixer.outputAudioMixerGroup;
-        var musicGroup = mixer.AddGroup("Music");
-        var sfxGroup = mixer.AddGroup("SFX");
+        // Create a new Audio Mixer
+        var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>("Packages/com.unity.audio.default-mixer/Runtime/DefaultAudioMixer.mixer");
+        if (mixer == null)
+        {
+            Debug.LogError("Could not find default audio mixer template!");
+            return;
+        }
 
-        // Add volume parameters
-        mixer.SetFloat("MusicVolume", 0f);
-        mixer.SetFloat("SFXVolume", 0f);
+        // Create a copy of the default mixer
+        AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(mixer), path);
+        var newMixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(path);
+
+        // Get the mixer groups
+        var groups = newMixer.FindMatchingGroups(string.Empty);
+        var masterGroup = groups[0];
+
+        // Create new groups if they don't exist
+        bool hasMusicGroup = false;
+        bool hasSFXGroup = false;
+
+        foreach (var group in groups)
+        {
+            if (group.name == "Music") hasMusicGroup = true;
+            if (group.name == "SFX") hasSFXGroup = true;
+        }
+
+        // Add exposed parameters
+        newMixer.SetFloat("MusicVolume", 0f);
+        newMixer.SetFloat("SFXVolume", 0f);
 
         // Save the changes
-        EditorUtility.SetDirty(mixer);
+        EditorUtility.SetDirty(newMixer);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
