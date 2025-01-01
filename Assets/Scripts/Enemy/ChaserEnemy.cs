@@ -1,29 +1,52 @@
 using UnityEngine;
 
-public class ChaserEnemy : EnemyBase
+public class ChaserEnemy : MonoBehaviour, IDimensionAware
 {
-    [Header("Chaser Settings")]
-    [SerializeField] private float chaseSpeed = 4f;
-    [SerializeField] private float stopDistance = 0.5f;
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float detectionRange = 10f;
+    
+    [Header("Dimension Settings")]
+    [SerializeField] private int[] activeDimensions;
+    
+    private Transform player;
+    private Rigidbody2D rb;
+    private bool isActive = true;
 
-    protected override void OnPlayerDetected()
+    private void Start()
     {
-        Vector2 direction = (player.position - transform.position).normalized;
-        float distance = Vector2.Distance(transform.position, player.position);
+        rb = GetComponent<Rigidbody2D>();
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        DimensionManager.Instance.RegisterDimensionAware(this);
+    }
 
-        if (distance > stopDistance)
+    private void Update()
+    {
+        if (!isActive || player == null) return;
+
+        float distance = Vector2.Distance(transform.position, player.position);
+        if (distance <= detectionRange)
         {
-            rb.linearVelocity = direction * chaseSpeed;
-            // Düşmanın yönünü çevir
-            transform.localScale = new Vector3(
-                direction.x > 0 ? -1 : 1,
-                1,
-                1
-            );
+            Vector2 direction = (player.position - transform.position).normalized;
+            rb.velocity = direction * moveSpeed;
         }
         else
         {
-            rb.linearVelocity = Vector2.zero;
+            rb.velocity = Vector2.zero;
+        }
+    }
+
+    public void OnDimensionChanged(int dimensionId)
+    {
+        isActive = System.Array.Exists(activeDimensions, d => d == dimensionId);
+        gameObject.SetActive(isActive);
+    }
+
+    private void OnDestroy()
+    {
+        if (DimensionManager.Instance != null)
+        {
+            DimensionManager.Instance.UnregisterDimensionAware(this);
         }
     }
 } 
