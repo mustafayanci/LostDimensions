@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
 
     private void InitializeManagers()
     {
-        uiManager = FindObjectOfType<MonoBehaviour>() as IUIManager;
+        uiManager = FindFirstObjectByType<MonoBehaviour>() as IUIManager;
         if (uiManager == null)
         {
             Debug.LogError("UIManager not found in scene!");

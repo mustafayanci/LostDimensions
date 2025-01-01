@@ -6,9 +6,11 @@ public class DimensionManager : MonoBehaviour
     public static DimensionManager Instance { get; private set; }
 
     [SerializeField] private int startingDimension = 0;
+    [SerializeField] private int maxDimensions = 4;
     [SerializeField] private float transitionDuration = 1f;
 
     private int currentDimension;
+    private int availableDimensions = 1;
     private readonly List<IDimensionAware> dimensionAwareObjects = new();
 
     private void Awake()
@@ -41,12 +43,22 @@ public class DimensionManager : MonoBehaviour
 
     public void ChangeDimension(int newDimension)
     {
-        if (currentDimension == newDimension) return;
-
-        currentDimension = newDimension;
-        foreach (var obj in dimensionAwareObjects)
+        if (newDimension >= 0 && newDimension < availableDimensions)
         {
-            obj.OnDimensionChanged(currentDimension);
+            currentDimension = newDimension;
+            foreach (var obj in dimensionAwareObjects)
+            {
+                obj.OnDimensionChanged(currentDimension);
+            }
+        }
+    }
+
+    public void SetAvailableDimensions(int count)
+    {
+        availableDimensions = Mathf.Clamp(count, 1, maxDimensions);
+        if (currentDimension >= availableDimensions)
+        {
+            ChangeDimension(0);
         }
     }
 

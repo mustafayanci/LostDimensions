@@ -1,24 +1,15 @@
 using UnityEngine;
-using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
-    [System.Serializable]
-    public class LevelData
-    {
-        public string sceneName;
-        public int dimensionCount;
-        public Vector3 playerStartPosition;
-    }
-
-    [Header("Level Settings")]
-    [SerializeField] private LevelData[] levels;
-    [SerializeField] private float transitionDuration = 1f;
-
+    [SerializeField] private string mainMenuScene = "MainMenu";
+    [SerializeField] private string[] levelScenes;
+    
     private int currentLevelIndex = -1;
+    private IUIManager uiManager;
 
     private void Awake()
     {
@@ -26,6 +17,7 @@ public class LevelManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            InitializeManagers();
         }
         else
         {
@@ -33,74 +25,73 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    public void LoadFirstLevel()
+    private void InitializeManagers()
     {
-        LoadLevel(0);
-    }
-
-    public void LoadNextLevel()
-    {
-        LoadLevel(currentLevelIndex + 1);
-    }
-
-    public void ReloadCurrentLevel()
-    {
-        LoadLevel(currentLevelIndex);
+        uiManager = FindFirstObjectByType<MonoBehaviour>() as IUIManager;
+        if (uiManager == null)
+        {
+            Debug.LogError("UIManager not found in scene!");
+        }
     }
 
     public void LoadMainMenu()
     {
-        StartCoroutine(LoadLevelRoutine("MainMenu"));
         currentLevelIndex = -1;
+        LoadScene(mainMenuScene);
+    }
+
+    public void LoadFirstLevel()
+    {
+        if (levelScenes.Length > 0)
+        {
+            currentLevelIndex = 0;
+            LoadLevel(currentLevelIndex);
+        }
+        else
+        {
+            Debug.LogError("No level scenes configured!");
+        }
+    }
+
+    public void LoadNextLevel()
+    {
+        if (currentLevelIndex < levelScenes.Length - 1)
+        {
+            currentLevelIndex++;
+            LoadLevel(currentLevelIndex);
+        }
+        else
+        {
+            // Oyun tamamlandı
+            if (uiManager != null)
+            {
+                uiManager.ShowGameOver();
+            }
+        }
+    }
+
+    public void ReloadCurrentLevel()
+    {
+        if (currentLevelIndex >= 0 && currentLevelIndex < levelScenes.Length)
+        {
+            LoadLevel(currentLevelIndex);
+        }
     }
 
     private void LoadLevel(int index)
     {
-        if (index >= 0 && index < levels.Length)
+        if (index >= 0 && index < levelScenes.Length)
         {
-            currentLevelIndex = index;
-            var levelData = levels[currentLevelIndex];
-            StartCoroutine(LoadLevelRoutine(levelData.sceneName));
-            
-            // Level ayarlarını uygula
-            DimensionManager.Instance.SetAvailableDimensions(levelData.dimensionCount);
-        }
-        else
-        {
-            Debug.LogWarning($"Invalid level index: {index}");
-        }
-    }
-
-    private System.Collections.IEnumerator LoadLevelRoutine(string sceneName)
-    {
-        // Geçiş efektini başlat
-        UIManager.Instance.ShowTransition(true);
-        yield return new WaitForSeconds(transitionDuration);
-
-        // Sahneyi yükle
-        var loadOperation = SceneManager.LoadSceneAsync(sceneName);
-        while (!loadOperation.isDone)
-        {
-            yield return null;
-        }
-
-        // Oyuncuyu başlangıç pozisyonuna yerleştir
-        if (currentLevelIndex >= 0)
-        {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
+            if (uiManager != null)
             {
-                player.transform.position = levels[currentLevelIndex].playerStartPosition;
+                uiManager.ShowTransition(true);
             }
+            LoadScene(levelScenes[index]);
         }
-
-        // Geçiş efektini bitir
-        yield return new WaitForSeconds(transitionDuration);
-        UIManager.Instance.ShowTransition(false);
     }
 
-    public Vector3 GetCurrentLevelStartPosition()
+    private void LoadScene(string sceneName)
     {
-        return currentLevelIndex >= 0 ? levels[currentLevelIndex].playerStartPosition : Vector3.zero;
+        SceneManager.LoadScene(sceneName);
     }
 } 
