@@ -1,15 +1,34 @@
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
-public class PackageInstaller
+public class PackageInstaller : EditorWindow
 {
     private static AddRequest Request;
+    private static string status = "";
 
-    [MenuItem("Game/Install Required Packages")]
-    public static void InstallRequiredPackages()
+    [MenuItem("Game/Package Installer")]
+    public static void ShowWindow()
     {
-        // TextMeshPro paketini ekle
+        GetWindow<PackageInstaller>("Package Installer");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Required Packages", EditorStyles.boldLabel);
+        
+        if (GUILayout.Button("Install TextMeshPro"))
+        {
+            InstallTMP();
+        }
+
+        EditorGUILayout.HelpBox(status, MessageType.Info);
+    }
+
+    private static void InstallTMP()
+    {
+        status = "Installing TextMeshPro...";
         Request = Client.Add("com.unity.textmeshpro");
         EditorApplication.update += Progress;
     }
@@ -19,9 +38,14 @@ public class PackageInstaller
         if (Request.IsCompleted)
         {
             if (Request.Status == StatusCode.Success)
-                Debug.Log("Installed: " + Request.Result.packageId);
+            {
+                status = "TextMeshPro installed successfully!";
+                TMPro.TMP_PackageUtilities.ImportTMPEssentials();
+            }
             else if (Request.Status >= StatusCode.Failure)
-                Debug.Log(Request.Error.message);
+            {
+                status = $"Failed to install: {Request.Error.message}";
+            }
 
             EditorApplication.update -= Progress;
         }
