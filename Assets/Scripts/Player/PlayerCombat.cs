@@ -1,32 +1,31 @@
 using UnityEngine;
+using Interfaces;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Combat Settings")]
-    [SerializeField] private float attackRange = 0.5f;
+    [Header("Attack Settings")]
     [SerializeField] private float attackDamage = 20f;
+    [SerializeField] private float attackRange = 1f;
     [SerializeField] private float attackCooldown = 0.5f;
-    [SerializeField] private LayerMask enemyLayers;
-    
-    [Header("Effects")]
-    [SerializeField] private ParticleSystem attackEffect;
+    [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private Transform attackPoint;
 
-    private bool canAttack = true;
-    private float cooldownTimer;
+    private float attackTimer;
+    private PlayerAnimator animator;
+
+    private void Start()
+    {
+        animator = GetComponent<PlayerAnimator>();
+    }
 
     private void Update()
     {
-        if (!canAttack)
+        if (attackTimer > 0)
         {
-            cooldownTimer -= Time.deltaTime;
-            if (cooldownTimer <= 0)
-            {
-                canAttack = true;
-            }
+            attackTimer -= Time.deltaTime;
         }
 
-        if (Input.GetButtonDown("Fire1") && canAttack)
+        if (Input.GetButtonDown("Fire1") && attackTimer <= 0)
         {
             Attack();
         }
@@ -34,19 +33,17 @@ public class PlayerCombat : MonoBehaviour
 
     private void Attack()
     {
-        // Saldırı animasyonunu oynat
-        GetComponent<PlayerAnimator>()?.PlayAttackAnimation();
+        attackTimer = attackCooldown;
+        animator?.PlayAttackAnimation();
 
-        // Efekti oynat
-        if (attackEffect != null)
-        {
-            attackEffect.Play();
-        }
+        // Çevredeki düşmanları kontrol et
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
 
-        // Çevredeki düşmanları bul ve hasar ver
-        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
         foreach (Collider2D enemy in hitEnemies)
         {
+            var enemyComponent = enemy.GetComponent<IEnemy>();
+            if (enemyComponent != null)
+            {
             enemy.GetComponent<EnemyBase>()?.TakeDamage(attackDamage);
         }
 

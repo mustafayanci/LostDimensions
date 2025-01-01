@@ -1,6 +1,7 @@
 using UnityEngine;
+using Interfaces;
 
-public abstract class EnemyBase : MonoBehaviour
+public abstract class EnemyBase : MonoBehaviour, IEnemy
 {
     [Header("Base Settings")]
     [SerializeField] protected float health = 100f;
