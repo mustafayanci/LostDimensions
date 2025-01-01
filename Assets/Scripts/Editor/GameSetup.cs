@@ -1,26 +1,17 @@
 using UnityEngine;
 using UnityEditor;
 
-public class GameSetup : Editor
+public class GameSetup
 {
-    [MenuItem("Game/Setup Complete Game")]
-    public static void SetupCompleteGame()
+    [MenuItem("Tools/Setup/Setup Game")]
+    public static void SetupGame()
     {
-        // 1. Proje yapısını oluştur
-        ProjectSetup.SetupProjectStructure();
+        // Create Audio System
+        AudioSetup.CreateAudioMixer();
 
-        // 2. Audio sistemini kur
-        AudioSetup.SetupAudioSystem();
+        // Create UI
+        TransitionSetup.SetupTransition();
 
-        // 3. UI sistemini kur
-        UISetup.SetupUI();
-
-        // 4. GameCore'u oluştur
-        CoreSetup.SetupGameCore();
-
-        // 5. Temel sahneleri oluştur
-        SceneSetup.SetupInitialScenes();
-
-        Debug.Log("Complete game setup finished!");
+        Debug.Log("Game setup completed!");
     }
 } 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEditor;
+using UnityEditor.Audio;
 
 public class AudioSetup
 {
@@ -8,22 +9,28 @@ public class AudioSetup
     public static void CreateAudioMixer()
     {
         // Create the mixer asset
-        var mixer = ScriptableObject.CreateInstance<AudioMixer>();
-        
-        // Create the asset file
         string path = "Assets/Audio/MainMixer.mixer";
+        
+        // Check if mixer already exists
+        var existingMixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(path);
+        if (existingMixer != null)
+        {
+            Debug.LogWarning("Audio Mixer already exists!");
+            return;
+        }
+
+        // Create mixer through the audio mixer template
+        AudioMixerController mixer = AudioMixerController.CreateDefaultAudioMixer();
         AssetDatabase.CreateAsset(mixer, path);
 
         // Create groups
         var masterGroup = mixer.outputAudioMixerGroup;
-        var musicGroup = AssetDatabase.LoadAssetAtPath<AudioMixerGroup>("Assets/Audio/Music.mixer");
-        var sfxGroup = AssetDatabase.LoadAssetAtPath<AudioMixerGroup>("Assets/Audio/SFX.mixer");
+        var musicGroup = mixer.AddGroup("Music");
+        var sfxGroup = mixer.AddGroup("SFX");
 
-        if (musicGroup == null || sfxGroup == null)
-        {
-            Debug.LogError("Failed to create audio mixer groups!");
-            return;
-        }
+        // Add volume parameters
+        mixer.SetFloat("MusicVolume", 0f);
+        mixer.SetFloat("SFXVolume", 0f);
 
         // Save the changes
         EditorUtility.SetDirty(mixer);
