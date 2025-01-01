@@ -1,5 +1,5 @@
 using UnityEngine;
-using Player;  // PlayerHealth namespace'i için
+using Interfaces;
 
 public class ChaserEnemy : EnemyBase
 {
@@ -46,7 +46,7 @@ public class ChaserEnemy : EnemyBase
     {
         if (attackTimer <= 0)
         {
-            var playerHealth = player.GetComponent<PlayerHealth>();
+            var playerHealth = player.GetComponent<IPlayer>();
             if (playerHealth != null)
             {
                 playerHealth.TakeDamage(damage);

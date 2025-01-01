@@ -1,5 +1,5 @@
 using UnityEngine;
-using Player;  // PlayerHealth namespace'i için
+using Interfaces;
 
 public class EnemyProjectile : MonoBehaviour
 {
@@ -25,7 +25,7 @@ public class EnemyProjectile : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            var playerHealth = other.GetComponent<PlayerHealth>();
+            var playerHealth = other.GetComponent<IPlayer>();
             if (playerHealth != null)
             {
                 playerHealth.TakeDamage(damage);
