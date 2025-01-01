@@ -1,22 +1,15 @@
 using UnityEngine;
-using UnityEngine.Events;
 using System.Collections.Generic;
 
 public class DimensionManager : MonoBehaviour
 {
     public static DimensionManager Instance { get; private set; }
 
-    [Header("Dimension Settings")]
-    [SerializeField] private int maxDimensions = 4;
-    [SerializeField] private float transitionDuration = 0.5f;
-    [SerializeField] private Color[] dimensionColors;
+    [SerializeField] private int startingDimension = 0;
+    [SerializeField] private float transitionDuration = 1f;
 
-    public int MaxDimensions => maxDimensions;
-    public UnityEvent<int> onDimensionChanged = new UnityEvent<int>();
-
-    private int currentDimension = 0;
-    private int availableDimensions = 1;
-    private List<IDimensionAware> dimensionAwareObjects = new List<IDimensionAware>();
+    private int currentDimension;
+    private readonly List<IDimensionAware> dimensionAwareObjects = new();
 
     private void Awake()
     {
@@ -24,6 +17,7 @@ public class DimensionManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            currentDimension = startingDimension;
         }
         else
         {
@@ -31,45 +25,28 @@ public class DimensionManager : MonoBehaviour
         }
     }
 
-    public void RegisterDimensionAware(IDimensionAware aware)
+    public void RegisterDimensionAware(IDimensionAware obj)
     {
-        if (!dimensionAwareObjects.Contains(aware))
+        if (!dimensionAwareObjects.Contains(obj))
         {
-            dimensionAwareObjects.Add(aware);
-            aware.OnDimensionChanged(currentDimension);
+            dimensionAwareObjects.Add(obj);
+            obj.OnDimensionChanged(currentDimension);
         }
     }
 
-    public void UnregisterDimensionAware(IDimensionAware aware)
+    public void UnregisterDimensionAware(IDimensionAware obj)
     {
-        dimensionAwareObjects.Remove(aware);
+        dimensionAwareObjects.Remove(obj);
     }
 
-    public void ChangeDimension(int dimensionId)
+    public void ChangeDimension(int newDimension)
     {
-        if (dimensionId >= 0 && dimensionId < availableDimensions)
-        {
-            currentDimension = dimensionId;
-            
-            foreach (var aware in dimensionAwareObjects)
-            {
-                if (aware != null)
-                {
-                    aware.OnDimensionChanged(currentDimension);
-                }
-            }
+        if (currentDimension == newDimension) return;
 
-            onDimensionChanged?.Invoke(currentDimension);
-            AudioManager.Instance.PlaySound($"DimensionChange_{currentDimension}");
-        }
-    }
-
-    public void SetAvailableDimensions(int count)
-    {
-        availableDimensions = Mathf.Clamp(count, 1, maxDimensions);
-        if (currentDimension >= availableDimensions)
+        currentDimension = newDimension;
+        foreach (var obj in dimensionAwareObjects)
         {
-            ChangeDimension(0);
+            obj.OnDimensionChanged(currentDimension);
         }
     }
 
@@ -77,19 +54,4 @@ public class DimensionManager : MonoBehaviour
     {
         return currentDimension;
     }
-
-    public Color GetDimensionColor(int dimensionId)
-    {
-        if (dimensionId >= 0 && dimensionId < dimensionColors.Length)
-        {
-            return dimensionColors[dimensionId];
-        }
-        return Color.white;
-    }
-}
-
-// Boyut değişiminden etkilenecek nesneler için interface
-public interface IDimensionAware
-{
-    void OnDimensionChanged(int dimensionId);
 } 

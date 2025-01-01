@@ -1,17 +1,12 @@
 using UnityEngine;
-using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public enum GameState { MainMenu, Playing, Paused, GameOver }
+    [SerializeField] private bool isPaused;
     
-    [Header("Game Settings")]
-    [SerializeField] private float gameOverDelay = 2f;
-    
-    public GameState CurrentState { get; private set; }
-    public UnityEvent<GameState> onGameStateChanged = new UnityEvent<GameState>();
+    private UIManager uiManager;
 
     private void Awake()
     {
@@ -19,7 +14,7 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            SetupGame();
+            InitializeManagers();
         }
         else
         {
@@ -27,14 +22,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SetupGame()
+    private void InitializeManagers()
     {
-        Application.targetFrameRate = 60;
-        CurrentState = GameState.MainMenu;
+        uiManager = FindObjectOfType<UIManager>();
+        if (uiManager == null)
+        {
+            Debug.LogError("UIManager not found in scene!");
+        }
     }
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
         if (Input.GetButtonDown("Pause") && CurrentState == GameState.Playing)
         {
             PauseGame();
