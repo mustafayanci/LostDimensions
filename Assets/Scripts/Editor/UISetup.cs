@@ -1,129 +1,128 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using UnityEditor;
+using TMPro;
 
 public class UISetup : Editor
 {
-    [MenuItem("Game/Setup UI")]
+    [MenuItem("Game/Setup UI System")]
     public static void SetupUI()
     {
-        // EventSystem kontrolü
-        if (GameObject.FindObjectOfType<EventSystem>() == null)
-        {
-            var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-        }
-
-        // Mevcut Canvas'ı kontrol et
-        var existingCanvas = GameObject.Find("GameCanvas");
-        if (existingCanvas != null)
-        {
-            DestroyImmediate(existingCanvas);
-        }
-
-        // Canvas oluştur
-        var canvasObj = new GameObject("GameCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        var canvas = canvasObj.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 1;
-
-        // CanvasScaler ayarları
-        var scaler = canvasObj.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-        scaler.matchWidthOrHeight = 0.5f;
-
-        // Joystick Panel
-        var joystickPanel = CreateUIElement("JoystickPanel", canvasObj, typeof(CanvasRenderer), typeof(Image));
-        var joystickRT = joystickPanel.GetComponent<RectTransform>();
-        joystickRT.anchorMin = new Vector2(0, 0);
-        joystickRT.anchorMax = new Vector2(0, 0);
-        joystickRT.pivot = new Vector2(0.5f, 0.5f);
-        joystickRT.anchoredPosition = new Vector2(150, 150);
-        joystickRT.sizeDelta = new Vector2(200, 200);
-        var panelImage = joystickPanel.GetComponent<Image>();
-        panelImage.color = new Color(1, 1, 1, 0); // Tamamen saydam
-
-        // Joystick Background
-        var background = CreateUIElement("JoystickBackground", joystickPanel, typeof(Image));
-        var bgRT = background.GetComponent<RectTransform>();
-        bgRT.sizeDelta = new Vector2(150, 150);
-        var bgImage = background.GetComponent<Image>();
-        bgImage.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-        bgImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        bgImage.type = Image.Type.Sliced;
-        bgImage.raycastTarget = true;
-
-        // Joystick Handle
-        var handle = CreateUIElement("JoystickHandle", background, typeof(Image));
-        var handleRT = handle.GetComponent<RectTransform>();
-        handleRT.sizeDelta = new Vector2(75, 75);
-        var handleImage = handle.GetComponent<Image>();
-        handleImage.color = Color.white;
-        handleImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        handleImage.type = Image.Type.Sliced;
-        handleImage.raycastTarget = true;
-
-        // Butonlar
-        CreateButton("JumpButton", canvasObj, new Vector2(1, 0), new Vector2(-200, 100), new Vector2(120, 120), "JUMP");
-        CreateButton("DashButton", canvasObj, new Vector2(1, 0), new Vector2(-350, 100), new Vector2(120, 120), "DASH");
-        CreateButton("DimensionButton", canvasObj, new Vector2(1, 1), new Vector2(-100, -50), new Vector2(160, 60), "DIMENSION");
-
-        // Script'leri ekle
-        var joystickScript = joystickPanel.AddComponent<SimpleJoystick>();
-        joystickScript.background = background.GetComponent<RectTransform>();
-        joystickScript.handle = handle.GetComponent<RectTransform>();
-
-        var mobileControls = canvasObj.AddComponent<MobileControls>();
-        mobileControls.moveJoystick = joystickScript;
-        mobileControls.jumpButton = GameObject.Find("JumpButton").GetComponent<Button>();
-        mobileControls.dashButton = GameObject.Find("DashButton").GetComponent<Button>();
-        mobileControls.dimensionChangeButton = GameObject.Find("DimensionButton").GetComponent<Button>();
-
-        Debug.Log("UI setup completed successfully!");
+        // Ana Canvas'ı oluştur
+        var canvas = CreateMainCanvas();
         
-        // Scene'i kaydet
-        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+        // HUD elementlerini oluştur
+        CreateHUD(canvas);
+        
+        // Menü panellerini oluştur
+        CreateMenuPanels(canvas);
+        
+        // Geçiş efektlerini oluştur
+        CreateTransitionEffects(canvas);
+
+        Debug.Log("UI system setup completed!");
     }
 
-    private static GameObject CreateUIElement(string name, GameObject parent, params System.Type[] components)
+    private static GameObject CreateMainCanvas()
     {
-        var go = new GameObject(name, components);
-        go.transform.SetParent(parent.transform, false);
-        return go;
+        var canvasObj = new GameObject("UICanvas");
+        var canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
+        
+        return canvasObj;
     }
 
-    private static void CreateButton(string name, GameObject parent, Vector2 anchor, Vector2 position, Vector2 size, string text)
+    private static void CreateHUD(GameObject canvas)
     {
-        var button = CreateUIElement(name, parent, typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        var rt = button.GetComponent<RectTransform>();
-        rt.anchorMin = anchor;
-        rt.anchorMax = anchor;
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = position;
-        rt.sizeDelta = size;
+        var hudPanel = CreatePanel(canvas, "HUDPanel");
+        
+        // Health Bar
+        var healthBar = CreateHealthBar(hudPanel);
+        
+        // Dimension Display
+        var dimensionText = CreateDimensionDisplay(hudPanel);
+        
+        // Score Display
+        var scoreText = CreateScoreDisplay(hudPanel);
+    }
 
-        // Buton görünümünü ayarla
-        var buttonImage = button.GetComponent<Image>();
-        buttonImage.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        buttonImage.type = Image.Type.Sliced;
-        buttonImage.color = new Color(0.8f, 0.8f, 0.8f, 0.9f);
+    private static void CreateMenuPanels(GameObject canvas)
+    {
+        // Pause Menu
+        var pausePanel = CreatePanel(canvas, "PausePanel");
+        pausePanel.SetActive(false);
+        CreateMenuButtons(pausePanel, new string[] { "Resume", "Restart", "Quit" });
+        
+        // Game Over Menu
+        var gameOverPanel = CreatePanel(canvas, "GameOverPanel");
+        gameOverPanel.SetActive(false);
+        CreateMenuButtons(gameOverPanel, new string[] { "Retry", "Menu" });
+    }
 
-        var textObj = CreateUIElement(name + "Text", button, typeof(CanvasRenderer), typeof(Text));
-        var textComp = textObj.GetComponent<Text>();
-        textComp.text = text;
-        textComp.alignment = TextAnchor.MiddleCenter;
-        textComp.color = Color.black;
-        textComp.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        textComp.fontSize = 24;
+    private static void CreateTransitionEffects(GameObject canvas)
+    {
+        var transitionPanel = CreatePanel(canvas, "TransitionPanel");
+        var canvasGroup = transitionPanel.AddComponent<CanvasGroup>();
+        canvasGroup.alpha = 0;
+        
+        var image = transitionPanel.GetComponent<Image>();
+        image.color = Color.black;
+    }
 
-        // Text RectTransform ayarları
-        var textRT = textObj.GetComponent<RectTransform>();
-        textRT.anchorMin = Vector2.zero;
-        textRT.anchorMax = Vector2.one;
-        textRT.sizeDelta = Vector2.zero;
-        textRT.offsetMin = Vector2.zero;
-        textRT.offsetMax = Vector2.zero;
+    private static GameObject CreatePanel(GameObject parent, string name)
+    {
+        var panel = new GameObject(name);
+        panel.transform.SetParent(parent.transform, false);
+        
+        var rect = panel.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.sizeDelta = Vector2.zero;
+        
+        panel.AddComponent<Image>();
+        
+        return panel;
+    }
+
+    private static void CreateMenuButtons(GameObject panel, string[] buttonNames)
+    {
+        var buttonContainer = CreatePanel(panel, "ButtonContainer");
+        var containerRect = buttonContainer.GetComponent<RectTransform>();
+        containerRect.sizeDelta = new Vector2(200, buttonNames.Length * 60);
+        
+        for (int i = 0; i < buttonNames.Length; i++)
+        {
+            CreateButton(buttonContainer, buttonNames[i], new Vector2(0, -i * 60));
+        }
+    }
+
+    private static GameObject CreateButton(GameObject parent, string text, Vector2 position)
+    {
+        var button = new GameObject(text + "Button");
+        button.transform.SetParent(parent.transform, false);
+        
+        var rect = button.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(160, 40);
+        rect.anchoredPosition = position;
+        
+        button.AddComponent<Image>();
+        button.AddComponent<Button>();
+        
+        var textObj = new GameObject("Text");
+        textObj.transform.SetParent(button.transform, false);
+        
+        var textRect = textObj.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.sizeDelta = Vector2.zero;
+        
+        var tmp = textObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.alignment = TextAlignmentOptions.Center;
+        
+        return button;
     }
 } 
