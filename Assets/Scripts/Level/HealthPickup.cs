@@ -1,4 +1,5 @@
 using UnityEngine;
+using Interfaces;
 
 public class HealthPickup : MonoBehaviour, IDimensionAware
 {
@@ -9,10 +10,10 @@ public class HealthPickup : MonoBehaviour, IDimensionAware
     {
         if (other.CompareTag("Player"))
         {
-            var playerHealth = other.GetComponent<PlayerHealth>();
+            var playerHealth = other.GetComponent<IPlayer>();
             if (playerHealth != null)
             {
-                playerHealth.RestoreHealth(healAmount);
+                playerHealth.RestoreHealth(-1);
                 Destroy(gameObject);
             }
         }

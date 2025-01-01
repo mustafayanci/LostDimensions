@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Interfaces;
 
-public class LevelManager : MonoBehaviour
+public class LevelManager : MonoBehaviour, ILevelManager
 {
     public static LevelManager Instance { get; private set; }
 
@@ -93,5 +94,10 @@ public class LevelManager : MonoBehaviour
     private void LoadScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
+    }
+
+    public void AddCheckpoint(Vector3 position)
+    {
+        // Checkpoint mantığını buraya ekleyin
     }
 } 

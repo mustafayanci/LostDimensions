@@ -1,4 +1,5 @@
 using UnityEngine;
+using Interfaces;
 
 public class Checkpoint : MonoBehaviour
 {
@@ -21,11 +22,13 @@ public class Checkpoint : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isActive) return;
-        
         if (other.CompareTag("Player"))
         {
-            Activate();
+            var levelManager = FindFirstObjectByType<MonoBehaviour>() as ILevelManager;
+            if (levelManager != null)
+            {
+                levelManager.AddCheckpoint(transform.position);
+            }
         }
     }
 

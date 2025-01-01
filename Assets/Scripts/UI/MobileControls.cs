@@ -1,48 +1,38 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Interfaces;
 
 public class MobileControls : MonoBehaviour
 {
-    [Header("Movement")]
-    [SerializeField] private SimpleJoystick moveJoystick;
     [SerializeField] private Button jumpButton;
-    [SerializeField] private Button dashButton;
-    
-    [Header("Dimension Change")]
-    [SerializeField] private Button dimensionChangeButton;
-    
-    private PlayerMovement playerMovement;
-    private DimensionManager dimensionManager;
-    private int currentDimension = 0;
+    [SerializeField] private Joystick movementJoystick;
+
+    private IPlayerMovement playerMovement;
 
     private void Start()
     {
-        playerMovement = FindObjectOfType<PlayerMovement>();
-        dimensionManager = DimensionManager.Instance;
+        playerMovement = FindFirstObjectByType<MonoBehaviour>() as IPlayerMovement;
         
-        SetupButtons();
+        if (jumpButton != null)
+        {
+            jumpButton.onClick.AddListener(OnJumpButtonPressed);
+        }
     }
 
-    private void SetupButtons()
+    private void OnJumpButtonPressed()
     {
-        jumpButton.onClick.AddListener(() => playerMovement.Jump());
-        dashButton.onClick.AddListener(() => playerMovement.StartCoroutine("Dash"));
-        dimensionChangeButton.onClick.AddListener(ChangeDimension);
+        if (playerMovement != null)
+        {
+            playerMovement.Jump();
+        }
     }
 
     private void Update()
     {
-        if (playerMovement != null)
+        if (playerMovement != null && movementJoystick != null)
         {
-            float horizontalInput = moveJoystick.Horizontal;
-            playerMovement.SetHorizontalInput(horizontalInput);
+            playerMovement.SetHorizontalInput(movementJoystick.Horizontal);
         }
-    }
-
-    private void ChangeDimension()
-    {
-        currentDimension = (currentDimension + 1) % 4;
-        dimensionManager.ChangeDimension(currentDimension);
     }
 } 

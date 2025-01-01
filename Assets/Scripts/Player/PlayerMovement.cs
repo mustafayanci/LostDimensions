@@ -1,7 +1,8 @@
 using UnityEngine;
+using Interfaces;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour, IPlayerMovement
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
@@ -26,6 +27,8 @@ public class PlayerMovement : MonoBehaviour
     private float horizontalInput;
     private bool facingRight = true;
     private bool isDashing;
+    private bool jumpInput = false;
+    private Vector2 moveInput = Vector2.zero;
 
     private void Awake()
     {
@@ -75,10 +78,9 @@ public class PlayerMovement : MonoBehaviour
         rb.linearVelocity = new Vector2(targetVelocityX, rb.linearVelocity.y);
     }
 
-    private void Jump()
+    public void Jump()
     {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        AudioManager.Instance.PlaySound("PlayerJump");
+        jumpInput = true;
     }
 
     private void WallJump()
@@ -115,5 +117,10 @@ public class PlayerMovement : MonoBehaviour
             scale.x *= -1;
             transform.localScale = scale;
         }
+    }
+
+    public void SetHorizontalInput(float input)
+    {
+        moveInput.x = input;
     }
 } 

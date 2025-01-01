@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.Events;
+using Interfaces;
 
-public class DimensionPuzzle : MonoBehaviour
+public class DimensionPuzzle : MonoBehaviour, IPuzzle
 {
     [System.Serializable]
     public class PuzzleStep
@@ -110,4 +111,6 @@ public class DimensionPuzzle : MonoBehaviour
             DimensionManager.Instance.onDimensionChanged.RemoveListener(OnDimensionChanged);
         }
     }
+
+    public int StepCount => currentStepIndex;
 } 
