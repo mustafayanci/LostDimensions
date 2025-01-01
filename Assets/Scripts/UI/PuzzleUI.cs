@@ -4,55 +4,101 @@ using TMPro;
 
 public class PuzzleUI : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI puzzleNameText;
-    [SerializeField] private TextMeshProUGUI puzzleStatusText;
+    [Header("UI Elements")]
+    [SerializeField] private TextMeshProUGUI stepCountText;
+    [SerializeField] private TextMeshProUGUI hintText;
     [SerializeField] private Image progressBar;
-    [SerializeField] private GameObject puzzleHintPanel;
     
-    private PuzzleBase currentPuzzle;
+    [Header("Settings")]
+    [SerializeField] private float hintDisplayDuration = 3f;
+    [SerializeField] private Color completedColor = Color.green;
+    
+    private DimensionPuzzle puzzle;
+    private float hintTimer;
 
-    public void Initialize(PuzzleBase puzzle, string puzzleName)
+    private void Awake()
     {
-        currentPuzzle = puzzle;
-        puzzleNameText.text = puzzleName;
-        
-        currentPuzzle.onPuzzleSolved.AddListener(OnPuzzleSolved);
-        currentPuzzle.onPuzzleReset.AddListener(OnPuzzleReset);
-        
-        UpdateUI("In Progress");
+        puzzle = GetComponent<DimensionPuzzle>();
+        if (puzzle != null)
+        {
+            puzzle.onStepCompleted.AddListener(OnPuzzleStepCompleted);
+            puzzle.onPuzzleCompleted.AddListener(OnPuzzleCompleted);
+        }
     }
 
-    private void OnPuzzleSolved()
+    private void Start()
     {
-        UpdateUI("Solved!");
-        StartCoroutine(HideAfterDelay(2f));
+        UpdateUI(0);
+        if (hintText != null)
+        {
+            hintText.gameObject.SetActive(false);
+        }
     }
 
-    private void OnPuzzleReset()
+    private void Update()
     {
-        UpdateUI("Reset");
+        if (hintTimer > 0)
+        {
+            hintTimer -= Time.deltaTime;
+            if (hintTimer <= 0)
+            {
+                HideHint();
+            }
+        }
     }
 
-    private void UpdateUI(string status)
+    private void OnPuzzleStepCompleted(int step)
     {
-        puzzleStatusText.text = status;
+        UpdateUI(step + 1);
+        ShowHint("Step completed!");
     }
 
-    public void ShowHint()
+    private void OnPuzzleCompleted()
     {
-        puzzleHintPanel.SetActive(true);
-        StartCoroutine(HideHintAfterDelay(5f));
+        if (progressBar != null)
+        {
+            progressBar.color = completedColor;
+        }
+        ShowHint("Puzzle completed!");
     }
 
-    private System.Collections.IEnumerator HideAfterDelay(float delay)
+    private void UpdateUI(int currentStep)
     {
-        yield return new WaitForSeconds(delay);
-        gameObject.SetActive(false);
+        if (stepCountText != null)
+        {
+            stepCountText.text = $"Step: {currentStep}";
+        }
+
+        if (progressBar != null && puzzle != null)
+        {
+            progressBar.fillAmount = currentStep / (float)puzzle.StepCount;
+        }
     }
 
-    private System.Collections.IEnumerator HideHintAfterDelay(float delay)
+    public void ShowHint(string message)
     {
-        yield return new WaitForSeconds(delay);
-        puzzleHintPanel.SetActive(false);
+        if (hintText != null)
+        {
+            hintText.text = message;
+            hintText.gameObject.SetActive(true);
+            hintTimer = hintDisplayDuration;
+        }
+    }
+
+    private void HideHint()
+    {
+        if (hintText != null)
+        {
+            hintText.gameObject.SetActive(false);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (puzzle != null)
+        {
+            puzzle.onStepCompleted.RemoveListener(OnPuzzleStepCompleted);
+            puzzle.onPuzzleCompleted.RemoveListener(OnPuzzleCompleted);
+        }
     }
 } 

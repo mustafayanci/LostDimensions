@@ -6,35 +6,32 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("Panels")]
-    [SerializeField] private GameObject pausePanel;
-    [SerializeField] private GameObject gameOverPanel;
-    [SerializeField] private CanvasGroup transitionPanel;
-
     [Header("HUD Elements")]
     [SerializeField] private Slider healthBar;
     [SerializeField] private TextMeshProUGUI dimensionText;
     [SerializeField] private GameObject[] dimensionIcons;
 
+    [Header("Panels")]
+    [SerializeField] private GameObject hudPanel;
+    [SerializeField] private GameObject pausePanel;
+    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private CanvasGroup transitionPanel;
+
     [Header("Settings")]
     [SerializeField] private float transitionSpeed = 2f;
-    
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            HideAllPanels();
         }
         else
         {
             Destroy(gameObject);
         }
-    }
-
-    private void Start()
-    {
-        HideAllPanels();
     }
 
     public void UpdateHealthBar(float healthPercentage)
@@ -53,7 +50,6 @@ public class UIManager : MonoBehaviour
             dimensionText.text = dimensionId < dimensionNames.Length ? dimensionNames[dimensionId] : "Unknown";
         }
 
-        // Dimension ikonlarını güncelle
         for (int i = 0; i < dimensionIcons.Length; i++)
         {
             if (dimensionIcons[i] != null)
@@ -68,6 +64,7 @@ public class UIManager : MonoBehaviour
         if (pausePanel != null)
         {
             pausePanel.SetActive(show);
+            hudPanel.SetActive(!show);
         }
     }
 
@@ -76,6 +73,7 @@ public class UIManager : MonoBehaviour
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
+            hudPanel.SetActive(false);
         }
     }
 
@@ -103,28 +101,9 @@ public class UIManager : MonoBehaviour
 
     private void HideAllPanels()
     {
+        if (hudPanel != null) hudPanel.SetActive(true);
         if (pausePanel != null) pausePanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (transitionPanel != null) transitionPanel.alpha = 0;
-    }
-
-    // UI Button Events
-    public void OnResumeClicked()
-    {
-        GameManager.Instance.ResumeGame();
-    }
-
-    public void OnRestartClicked()
-    {
-        GameManager.Instance.RestartLevel();
-    }
-
-    public void OnQuitClicked()
-    {
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #else
-        Application.Quit();
-        #endif
     }
 } 
