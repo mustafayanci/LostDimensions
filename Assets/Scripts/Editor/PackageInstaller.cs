@@ -3,51 +3,45 @@ using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
-public class PackageInstaller : EditorWindow
+public class PackageInstaller
 {
-    private static AddRequest Request;
-    private static string status = "";
-
-    [MenuItem("Game/Package Installer")]
-    public static void ShowWindow()
+    [MenuItem("Tools/Setup/Install Required Packages")]
+    public static void InstallRequiredPackages()
     {
-        GetWindow<PackageInstaller>("Package Installer");
-    }
-
-    private void OnGUI()
-    {
-        GUILayout.Label("Required Packages", EditorStyles.boldLabel);
+        // Install TextMeshPro
+        InstallPackage("com.unity.textmeshpro");
         
-        if (GUILayout.Button("Install TextMeshPro"))
-        {
-            InstallTMP();
-        }
-
-        EditorGUILayout.HelpBox(status, MessageType.Info);
+        // Install other required packages
+        InstallPackage("com.unity.2d.sprite");
+        InstallPackage("com.unity.2d.animation");
     }
 
-    private static void InstallTMP()
+    private static void InstallPackage(string packageId)
     {
-        status = "Installing TextMeshPro...";
-        Request = Client.Add("com.unity.textmeshpro");
-        EditorApplication.update += Progress;
+        var request = Client.Add(packageId);
+        
+        EditorApplication.update += () =>
+        {
+            if (request.Status == StatusCode.Failure)
+            {
+                Debug.LogError($"Failed to install package: {packageId}");
+            }
+            else if (request.Status == StatusCode.Success)
+            {
+                Debug.Log($"Successfully installed package: {packageId}");
+                
+                // If it's TextMeshPro, import essentials
+                if (packageId == "com.unity.textmeshpro")
+                {
+                    ImportTMPEssentials();
+                }
+            }
+        };
     }
 
-    private static void Progress()
+    private static void ImportTMPEssentials()
     {
-        if (Request.IsCompleted)
-        {
-            if (Request.Status == StatusCode.Success)
-            {
-                status = "TextMeshPro installed successfully!";
-                TMPro.TMP_PackageUtilities.ImportTMPEssentials();
-            }
-            else if (Request.Status >= StatusCode.Failure)
-            {
-                status = $"Failed to install: {Request.Error.message}";
-            }
-
-            EditorApplication.update -= Progress;
-        }
+        // Use AssetDatabase to import TMP essentials
+        AssetDatabase.ImportPackage("Packages/com.unity.textmeshpro/Package Resources/TMP Essential Resources.unitypackage", false);
     }
 } 

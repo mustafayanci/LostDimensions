@@ -2,62 +2,34 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEditor;
 
-public class AudioSetup : Editor
+public class AudioSetup
 {
-    [MenuItem("Game/Setup Audio System")]
-    public static void SetupAudioSystem()
+    [MenuItem("Tools/Audio/Create Audio Mixer")]
+    public static void CreateAudioMixer()
     {
-        // Ana Audio Mixer'ı oluştur
-        var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>("Assets/Audio/GameAudioMixer.mixer");
-        if (mixer == null)
+        // Create the mixer asset
+        var mixer = ScriptableObject.CreateInstance<AudioMixer>();
+        
+        // Create the asset file
+        string path = "Assets/Audio/MainMixer.mixer";
+        AssetDatabase.CreateAsset(mixer, path);
+
+        // Create groups
+        var masterGroup = mixer.outputAudioMixerGroup;
+        var musicGroup = AssetDatabase.LoadAssetAtPath<AudioMixerGroup>("Assets/Audio/Music.mixer");
+        var sfxGroup = AssetDatabase.LoadAssetAtPath<AudioMixerGroup>("Assets/Audio/SFX.mixer");
+
+        if (musicGroup == null || sfxGroup == null)
         {
-            mixer = new AudioMixer();
-            AssetDatabase.CreateAsset(mixer, "Assets/Audio/GameAudioMixer.mixer");
-
-            // Mixer gruplarını oluştur
-            var masterGroup = mixer.FindMatchingGroups("Master")[0];
-            var musicGroup = mixer.CreateGroup("Music");
-            var sfxGroup = mixer.CreateGroup("SFX");
-
-            // Exposed parametreleri ekle
-            mixer.SetFloat("MusicVolume", 0f);
-            mixer.SetFloat("SFXVolume", 0f);
+            Debug.LogError("Failed to create audio mixer groups!");
+            return;
         }
 
-        // Temel ses efektlerini ayarla
-        SetupBasicSounds();
+        // Save the changes
+        EditorUtility.SetDirty(mixer);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
 
-        Debug.Log("Audio system setup completed!");
-    }
-
-    private static void SetupBasicSounds()
-    {
-        var sounds = new string[]
-        {
-            "PlayerJump",
-            "PlayerHurt",
-            "PlayerDeath",
-            "EnemyHit",
-            "EnemyDeath",
-            "CheckpointActivated",
-            "DimensionChange_0",
-            "DimensionChange_1",
-            "DimensionChange_2",
-            "DimensionChange_3",
-            "LevelComplete",
-            "GameOver",
-            "ButtonClick"
-        };
-
-        // Her ses için bir placeholder AudioClip oluştur
-        foreach (var sound in sounds)
-        {
-            var path = $"Assets/Audio/SFX/{sound}.wav";
-            if (!AssetDatabase.LoadAssetAtPath<AudioClip>(path))
-            {
-                var clip = AudioClip.Create(sound, 44100, 1, 44100, false);
-                AssetDatabase.CreateAsset(clip, path);
-            }
-        }
+        Debug.Log("Audio Mixer created successfully!");
     }
 } 
