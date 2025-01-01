@@ -3,187 +3,196 @@ using UnityEngine.UI;
 using UnityEditor;
 using TMPro;
 
-public class UISetup : Editor
+public class UISetup
 {
-    [MenuItem("Game/Setup UI System")]
-    public static void SetupUI()
+    [MenuItem("Tools/UI/Setup Game UI")]
+    public static void SetupGameUI()
     {
         // Ana Canvas'ı oluştur
         var canvas = CreateMainCanvas();
         
-        // HUD elementlerini oluştur
-        CreateHUD(canvas);
-        
-        // Menü panellerini oluştur
-        CreateMenuPanels(canvas);
-        
-        // Geçiş efektlerini oluştur
-        CreateTransitionEffects(canvas);
+        // UI Manager'ı oluştur
+        var uiManager = CreateUIManager();
 
-        Debug.Log("UI system setup completed!");
+        // HUD Panel
+        var hudPanel = CreateHUDPanel(canvas.transform);
+        CreateHealthBar(hudPanel.transform);
+        CreateDimensionDisplay(hudPanel.transform);
+
+        // Pause Panel
+        var pausePanel = CreatePausePanel(canvas.transform);
+        CreatePauseMenu(pausePanel.transform);
+
+        // Game Over Panel
+        var gameOverPanel = CreateGameOverPanel(canvas.transform);
+        CreateGameOverMenu(gameOverPanel.transform);
+
+        // Transition Panel
+        var transitionPanel = CreateTransitionPanel(canvas.transform);
+
+        // UI Manager referanslarını ayarla
+        SetupUIManagerReferences(uiManager, hudPanel, pausePanel, gameOverPanel, transitionPanel);
+
+        Debug.Log("Game UI setup completed!");
     }
 
-    private static GameObject CreateMainCanvas()
+    private static Canvas CreateMainCanvas()
     {
-        var canvasObj = new GameObject("UICanvas");
+        var canvasObj = new GameObject("GameCanvas");
         var canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 100;
         
         canvasObj.AddComponent<CanvasScaler>();
         canvasObj.AddComponent<GraphicRaycaster>();
         
-        return canvasObj;
+        return canvas;
     }
 
-    private static void CreateHUD(GameObject canvas)
+    private static UIManager CreateUIManager()
     {
-        var hudPanel = CreatePanel(canvas, "HUDPanel");
-        
-        // Health Bar
-        var healthBar = CreateHealthBar(hudPanel);
-        
-        // Dimension Display
-        var dimensionText = CreateDimensionDisplay(hudPanel);
-        
-        // Score Display
-        var scoreText = CreateScoreDisplay(hudPanel);
+        var uiManagerObj = new GameObject("UIManager");
+        return uiManagerObj.AddComponent<UIManager>();
     }
 
-    private static void CreateMenuPanels(GameObject canvas)
+    private static GameObject CreateHUDPanel(Transform parent)
     {
-        // Pause Menu
-        var pausePanel = CreatePanel(canvas, "PausePanel");
-        pausePanel.SetActive(false);
-        CreateMenuButtons(pausePanel, new string[] { "Resume", "Restart", "Quit" });
-        
-        // Game Over Menu
-        var gameOverPanel = CreatePanel(canvas, "GameOverPanel");
-        gameOverPanel.SetActive(false);
-        CreateMenuButtons(gameOverPanel, new string[] { "Retry", "Menu" });
+        var panel = CreatePanel("HUDPanel", parent);
+        panel.GetComponent<CanvasGroup>().alpha = 1;
+        return panel;
     }
 
-    private static void CreateTransitionEffects(GameObject canvas)
+    private static void CreateHealthBar(Transform parent)
     {
-        var transitionPanel = CreatePanel(canvas, "TransitionPanel");
-        var canvasGroup = transitionPanel.AddComponent<CanvasGroup>();
-        canvasGroup.alpha = 0;
+        var healthBar = new GameObject("HealthBar", typeof(Slider));
+        healthBar.transform.SetParent(parent, false);
+        healthBar.GetComponent<RectTransform>().anchoredPosition = new Vector2(-350, 200);
         
-        var image = transitionPanel.GetComponent<Image>();
+        var slider = healthBar.GetComponent<Slider>();
+        slider.minValue = 0;
+        slider.maxValue = 1;
+        slider.value = 1;
+    }
+
+    private static void CreateDimensionDisplay(Transform parent)
+    {
+        var dimensionText = new GameObject("DimensionText", typeof(TextMeshProUGUI));
+        dimensionText.transform.SetParent(parent, false);
+        dimensionText.GetComponent<RectTransform>().anchoredPosition = new Vector2(350, 200);
+        
+        var tmp = dimensionText.GetComponent<TextMeshProUGUI>();
+        tmp.text = "Normal";
+        tmp.fontSize = 36;
+        tmp.alignment = TextAlignmentOptions.Center;
+    }
+
+    private static GameObject CreatePausePanel(Transform parent)
+    {
+        var panel = CreatePanel("PausePanel", parent);
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private static void CreatePauseMenu(Transform parent)
+    {
+        var title = CreateText(parent, "PAUSED", new Vector2(0, 100));
+        CreateButton(parent, "Resume", new Vector2(0, 0), "Resume");
+        CreateButton(parent, "Main Menu", new Vector2(0, -100), "MainMenu");
+    }
+
+    private static GameObject CreateGameOverPanel(Transform parent)
+    {
+        var panel = CreatePanel("GameOverPanel", parent);
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private static void CreateGameOverMenu(Transform parent)
+    {
+        var title = CreateText(parent, "GAME OVER", new Vector2(0, 100));
+        CreateButton(parent, "Retry", new Vector2(0, 0), "Retry");
+        CreateButton(parent, "Main Menu", new Vector2(0, -100), "MainMenu");
+    }
+
+    private static GameObject CreateTransitionPanel(Transform parent)
+    {
+        var panel = CreatePanel("TransitionPanel", parent);
+        var image = panel.GetComponent<Image>();
         image.color = Color.black;
-    }
-
-    private static GameObject CreatePanel(GameObject parent, string name)
-    {
-        var panel = new GameObject(name);
-        panel.transform.SetParent(parent.transform, false);
         
-        var rect = panel.AddComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.sizeDelta = Vector2.zero;
-        
-        panel.AddComponent<Image>();
+        var canvasGroup = panel.GetComponent<CanvasGroup>();
+        canvasGroup.alpha = 0;
+        canvasGroup.blocksRaycasts = false;
         
         return panel;
     }
 
-    private static void CreateMenuButtons(GameObject panel, string[] buttonNames)
+    private static GameObject CreatePanel(string name, Transform parent)
     {
-        var buttonContainer = CreatePanel(panel, "ButtonContainer");
-        var containerRect = buttonContainer.GetComponent<RectTransform>();
-        containerRect.sizeDelta = new Vector2(200, buttonNames.Length * 60);
+        var panel = new GameObject(name, typeof(CanvasGroup), typeof(Image));
+        panel.transform.SetParent(parent, false);
         
-        for (int i = 0; i < buttonNames.Length; i++)
-        {
-            CreateButton(buttonContainer, buttonNames[i], new Vector2(0, -i * 60));
-        }
+        var rectTransform = panel.GetComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.sizeDelta = Vector2.zero;
+        
+        var image = panel.GetComponent<Image>();
+        image.color = new Color(0, 0, 0, 0.8f);
+        
+        return panel;
     }
 
-    private static GameObject CreateButton(GameObject parent, string text, Vector2 position)
+    private static TextMeshProUGUI CreateText(Transform parent, string text, Vector2 position)
     {
-        var button = new GameObject(text + "Button");
-        button.transform.SetParent(parent.transform, false);
+        var textObj = new GameObject(text + "Text", typeof(TextMeshProUGUI));
+        textObj.transform.SetParent(parent, false);
         
-        var rect = button.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(160, 40);
-        rect.anchoredPosition = position;
+        var rectTransform = textObj.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = position;
         
-        button.AddComponent<Image>();
-        button.AddComponent<Button>();
-        
-        var textObj = new GameObject("Text");
-        textObj.transform.SetParent(button.transform, false);
-        
-        var textRect = textObj.AddComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.sizeDelta = Vector2.zero;
-        
-        var tmp = textObj.AddComponent<TextMeshProUGUI>();
+        var tmp = textObj.GetComponent<TextMeshProUGUI>();
         tmp.text = text;
+        tmp.fontSize = 48;
         tmp.alignment = TextAlignmentOptions.Center;
         
-        return button;
+        return tmp;
     }
 
-    private static GameObject CreateHealthBar(GameObject parent)
+    private static Button CreateButton(Transform parent, string text, Vector2 position, string buttonName)
     {
-        var healthBarObj = CreatePanel(parent, "HealthBar");
-        var rect = healthBarObj.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0, 1);
-        rect.anchorMax = new Vector2(0, 1);
-        rect.anchoredPosition = new Vector2(20, -20);
-        rect.sizeDelta = new Vector2(200, 20);
-
-        var slider = healthBarObj.AddComponent<Slider>();
-        slider.minValue = 0;
-        slider.maxValue = 1;
-        slider.value = 1;
-
-        var background = CreatePanel(healthBarObj, "Background");
-        var fill = CreatePanel(healthBarObj, "Fill");
+        var buttonObj = new GameObject(buttonName + "Button", typeof(Image), typeof(Button));
+        buttonObj.transform.SetParent(parent, false);
         
-        slider.targetGraphic = background.GetComponent<Image>();
-        slider.fillRect = fill.GetComponent<RectTransform>();
+        var rectTransform = buttonObj.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = position;
+        rectTransform.sizeDelta = new Vector2(200, 50);
         
-        return healthBarObj;
+        var buttonText = CreateText(buttonObj.transform, text, Vector2.zero);
+        buttonText.fontSize = 24;
+        
+        return buttonObj.GetComponent<Button>();
     }
 
-    private static GameObject CreateDimensionDisplay(GameObject parent)
+    private static void SetupUIManagerReferences(UIManager uiManager, GameObject hudPanel, GameObject pausePanel, 
+        GameObject gameOverPanel, GameObject transitionPanel)
     {
-        var dimensionObj = new GameObject("DimensionDisplay");
-        dimensionObj.transform.SetParent(parent.transform, false);
+        var serializedObject = new SerializedObject(uiManager);
         
-        var rect = dimensionObj.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1, 1);
-        rect.anchorMax = new Vector2(1, 1);
-        rect.anchoredPosition = new Vector2(-20, -20);
-        rect.sizeDelta = new Vector2(200, 30);
-
-        var tmp = dimensionObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = "Dimension: 0";
-        tmp.alignment = TextAlignmentOptions.Right;
-        tmp.fontSize = 24;
+        SetSerializedProperty(serializedObject, "hudPanel", hudPanel);
+        SetSerializedProperty(serializedObject, "pausePanel", pausePanel);
+        SetSerializedProperty(serializedObject, "gameOverPanel", gameOverPanel);
+        SetSerializedProperty(serializedObject, "transitionPanel", transitionPanel.GetComponent<CanvasGroup>());
         
-        return dimensionObj;
+        serializedObject.ApplyModifiedProperties();
     }
 
-    private static GameObject CreateScoreDisplay(GameObject parent)
+    private static void SetSerializedProperty(SerializedObject serializedObject, string propertyName, Object value)
     {
-        var scoreObj = new GameObject("ScoreDisplay");
-        scoreObj.transform.SetParent(parent.transform, false);
-        
-        var rect = scoreObj.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 1);
-        rect.anchorMax = new Vector2(0.5f, 1);
-        rect.anchoredPosition = new Vector2(0, -20);
-        rect.sizeDelta = new Vector2(200, 30);
-
-        var tmp = scoreObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = "Score: 0";
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.fontSize = 24;
-        
-        return scoreObj;
+        var property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.objectReferenceValue = value;
+        }
     }
 } 

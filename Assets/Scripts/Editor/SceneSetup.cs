@@ -114,7 +114,7 @@ public class SceneSetup
 
     private static void SetupUI()
     {
-        TransitionSetup.SetupTransition();
+        UISetup.SetupGameUI();
     }
 
     private static void EnsureDirectoryExists(string path)
