@@ -16,14 +16,9 @@ public class LevelManager : MonoBehaviour
 
     [Header("Level Settings")]
     [SerializeField] private LevelData[] levels;
-    [SerializeField] private float levelTransitionTime = 1f;
-    
-    [Header("Checkpoint Settings")]
-    [SerializeField] private float checkpointActivationDelay = 0.5f;
-    
-    private int currentLevelIndex;
-    private List<Vector3> checkpoints = new List<Vector3>();
-    private bool isTransitioning;
+    [SerializeField] private float transitionDuration = 1f;
+
+    private int currentLevelIndex = -1;
 
     private void Awake()
     {
@@ -31,7 +26,6 @@ public class LevelManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            InitializeLevel();
         }
         else
         {
@@ -39,99 +33,74 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    private void InitializeLevel()
+    public void LoadFirstLevel()
     {
-        currentLevelIndex = 0;
-        checkpoints.Clear();
-        isTransitioning = false;
+        LoadLevel(0);
     }
 
     public void LoadNextLevel()
     {
-        if (isTransitioning) return;
-        
-        currentLevelIndex++;
-        if (currentLevelIndex >= levels.Length)
-        {
-            // Oyun bitti
-            Debug.Log("Game Completed!");
-            return;
-        }
+        LoadLevel(currentLevelIndex + 1);
+    }
 
-        StartCoroutine(LoadLevelRoutine(levels[currentLevelIndex].sceneName));
+    public void ReloadCurrentLevel()
+    {
+        LoadLevel(currentLevelIndex);
+    }
+
+    public void LoadMainMenu()
+    {
+        StartCoroutine(LoadLevelRoutine("MainMenu"));
+        currentLevelIndex = -1;
+    }
+
+    private void LoadLevel(int index)
+    {
+        if (index >= 0 && index < levels.Length)
+        {
+            currentLevelIndex = index;
+            var levelData = levels[currentLevelIndex];
+            StartCoroutine(LoadLevelRoutine(levelData.sceneName));
+            
+            // Level ayarlarını uygula
+            DimensionManager.Instance.SetAvailableDimensions(levelData.dimensionCount);
+        }
+        else
+        {
+            Debug.LogWarning($"Invalid level index: {index}");
+        }
     }
 
     private System.Collections.IEnumerator LoadLevelRoutine(string sceneName)
     {
-        isTransitioning = true;
-        
         // Geçiş efektini başlat
         UIManager.Instance.ShowTransition(true);
-        
-        yield return new WaitForSeconds(levelTransitionTime);
+        yield return new WaitForSeconds(transitionDuration);
 
-        // Yeni sahneyi yükle
-        var operation = SceneManager.LoadSceneAsync(sceneName);
-        while (!operation.isDone)
+        // Sahneyi yükle
+        var loadOperation = SceneManager.LoadSceneAsync(sceneName);
+        while (!loadOperation.isDone)
         {
             yield return null;
         }
 
-        // Level'ı hazırla
-        SetupLevel(levels[currentLevelIndex]);
-        
-        // Geçiş efektini bitir
-        UIManager.Instance.ShowTransition(false);
-        
-        isTransitioning = false;
-    }
-
-    private void SetupLevel(LevelData levelData)
-    {
         // Oyuncuyu başlangıç pozisyonuna yerleştir
-        if (GameManager.Instance.playerPrefab != null)
+        if (currentLevelIndex >= 0)
         {
             var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null)
+            if (player != null)
             {
-                player = Instantiate(GameManager.Instance.playerPrefab, levelData.playerStartPosition, Quaternion.identity);
-            }
-            else
-            {
-                player.transform.position = levelData.playerStartPosition;
+                player.transform.position = levels[currentLevelIndex].playerStartPosition;
             }
         }
 
-        // Checkpoint'leri temizle
-        checkpoints.Clear();
-        
-        // Boyut sayısını ayarla
-        DimensionManager.Instance.SetAvailableDimensions(levelData.dimensionCount);
+        // Geçiş efektini bitir
+        yield return new WaitForSeconds(transitionDuration);
+        UIManager.Instance.ShowTransition(false);
     }
 
-    public void AddCheckpoint(Vector3 position)
+    public Vector3 GetCurrentLevelStartPosition()
     {
-        if (!checkpoints.Contains(position))
-        {
-            checkpoints.Add(position);
-            GameManager.Instance.SetCheckpoint(position);
-            StartCoroutine(ShowCheckpointActivation(position));
-        }
-    }
-
-    private System.Collections.IEnumerator ShowCheckpointActivation(Vector3 position)
-    {
-        // Checkpoint efektini göster
-        // TODO: Checkpoint efekti ekle
-        
-        yield return new WaitForSeconds(checkpointActivationDelay);
-    }
-
-    public Vector3 GetLastCheckpoint()
-    {
-        if (checkpoints.Count > 0)
-            return checkpoints[checkpoints.Count - 1];
-            
-        return levels[currentLevelIndex].playerStartPosition;
+        return currentLevelIndex >= 0 ? levels[currentLevelIndex].playerStartPosition : Vector3.zero;
     }
 } 

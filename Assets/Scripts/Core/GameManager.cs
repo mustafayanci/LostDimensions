@@ -1,18 +1,17 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("Game States")]
-    public bool isGamePaused;
-    public bool isGameOver;
+    public enum GameState { MainMenu, Playing, Paused, GameOver }
     
-    [Header("Player Reference")]
-    public GameObject playerPrefab;
-    private GameObject currentPlayer;
-    private Vector3 lastCheckpoint;
+    [Header("Game Settings")]
+    [SerializeField] private float gameOverDelay = 2f;
+    
+    public GameState CurrentState { get; private set; }
+    public UnityEvent<GameState> onGameStateChanged = new UnityEvent<GameState>();
 
     private void Awake()
     {
@@ -20,7 +19,7 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            InitializeGame();
+            SetupGame();
         }
         else
         {
@@ -28,65 +27,78 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void InitializeGame()
+    private void SetupGame()
     {
-        isGamePaused = false;
-        isGameOver = false;
-        lastCheckpoint = Vector3.zero;
-    }
-
-    public void PauseGame()
-    {
-        isGamePaused = true;
-        Time.timeScale = 0f;
-        UIManager.Instance.ShowPauseMenu(true);
-    }
-
-    public void ResumeGame()
-    {
-        isGamePaused = false;
-        Time.timeScale = 1f;
-        UIManager.Instance.ShowPauseMenu(false);
-    }
-
-    public void GameOver()
-    {
-        isGameOver = true;
-        UIManager.Instance.ShowGameOver();
-    }
-
-    public void RestartLevel()
-    {
-        isGameOver = false;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    public void SetCheckpoint(Vector3 position)
-    {
-        lastCheckpoint = position;
-    }
-
-    public void RespawnPlayer()
-    {
-        if (currentPlayer != null)
-        {
-            currentPlayer.transform.position = lastCheckpoint;
-            var health = currentPlayer.GetComponent<PlayerHealth>();
-            if (health != null)
-            {
-                health.RestoreHealth();
-            }
-        }
+        Application.targetFrameRate = 60;
+        CurrentState = GameState.MainMenu;
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetButtonDown("Pause") && CurrentState == GameState.Playing)
         {
-            if (isGamePaused)
-                ResumeGame();
-            else
-                PauseGame();
+            PauseGame();
         }
+    }
+
+    public void StartGame()
+    {
+        ChangeState(GameState.Playing);
+        LevelManager.Instance.LoadFirstLevel();
+    }
+
+    public void PauseGame()
+    {
+        if (CurrentState == GameState.Playing)
+        {
+            ChangeState(GameState.Paused);
+            Time.timeScale = 0;
+            UIManager.Instance.ShowPauseMenu(true);
+        }
+    }
+
+    public void ResumeGame()
+    {
+        if (CurrentState == GameState.Paused)
+        {
+            ChangeState(GameState.Playing);
+            Time.timeScale = 1;
+            UIManager.Instance.ShowPauseMenu(false);
+        }
+    }
+
+    public void GameOver()
+    {
+        if (CurrentState == GameState.GameOver) return;
+        
+        ChangeState(GameState.GameOver);
+        StartCoroutine(GameOverRoutine());
+    }
+
+    private System.Collections.IEnumerator GameOverRoutine()
+    {
+        yield return new WaitForSeconds(gameOverDelay);
+        UIManager.Instance.ShowGameOver();
+        Time.timeScale = 0;
+    }
+
+    public void RestartLevel()
+    {
+        Time.timeScale = 1;
+        ChangeState(GameState.Playing);
+        LevelManager.Instance.ReloadCurrentLevel();
+    }
+
+    public void QuitToMenu()
+    {
+        Time.timeScale = 1;
+        ChangeState(GameState.MainMenu);
+        LevelManager.Instance.LoadMainMenu();
+    }
+
+    private void ChangeState(GameState newState)
+    {
+        CurrentState = newState;
+        onGameStateChanged?.Invoke(newState);
     }
 } 
