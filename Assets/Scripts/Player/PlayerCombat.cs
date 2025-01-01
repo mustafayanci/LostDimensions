@@ -44,22 +44,18 @@ public class PlayerCombat : MonoBehaviour
             var enemyComponent = enemy.GetComponent<IEnemy>();
             if (enemyComponent != null)
             {
-            enemy.GetComponent<EnemyBase>()?.TakeDamage(attackDamage);
+                enemyComponent.TakeDamage(attackDamage);
+            }
         }
 
-        // Cooldown'u başlat
-        canAttack = false;
-        cooldownTimer = attackCooldown;
-        
         AudioManager.Instance.PlaySound("PlayerAttack");
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (attackPoint != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
-        }
+        if (attackPoint == null) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 } 
