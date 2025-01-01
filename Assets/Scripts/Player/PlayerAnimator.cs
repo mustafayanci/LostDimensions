@@ -30,10 +30,10 @@ public class PlayerAnimator : MonoBehaviour
         }
 
         // Animator parametrelerini güncelle
-        animator.SetBool(IsGrounded, Physics2D.Raycast(transform.position, Vector2.down, 0.1f));
+        animator.SetBool(IsGrounded, controller.IsGrounded);
         animator.SetBool(IsRunning, Mathf.Abs(rb.velocity.x) > 0.1f);
         animator.SetFloat(VerticalVelocity, rb.velocity.y);
-        animator.SetBool(IsDashing, false); // PlayerController'dan dash durumunu al
+        animator.SetBool(IsDashing, controller.IsDashing);
     }
 
     public void PlayHurtAnimation()

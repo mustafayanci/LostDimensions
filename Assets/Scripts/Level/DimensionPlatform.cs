@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(SpriteRenderer), typeof(Collider2D))]
 public class DimensionPlatform : MonoBehaviour, IDimensionAware
 {
     [System.Serializable]
@@ -16,7 +16,6 @@ public class DimensionPlatform : MonoBehaviour, IDimensionAware
     
     private SpriteRenderer spriteRenderer;
     private Collider2D platformCollider;
-    private DimensionState currentState;
 
     private void Awake()
     {
@@ -27,15 +26,15 @@ public class DimensionPlatform : MonoBehaviour, IDimensionAware
 
     public void OnDimensionChanged(int dimensionId)
     {
-        currentState = System.Array.Find(dimensionStates, state => state.dimensionId == dimensionId);
+        var state = System.Array.Find(dimensionStates, s => s.dimensionId == dimensionId);
         
-        if (currentState != null)
+        if (state != null)
         {
-            gameObject.SetActive(currentState.isActive);
-            if (currentState.isActive)
+            gameObject.SetActive(state.isActive);
+            if (state.isActive)
             {
-                spriteRenderer.color = currentState.platformColor;
-                platformCollider.isTrigger = !currentState.isSolid;
+                spriteRenderer.color = state.platformColor;
+                platformCollider.isTrigger = !state.isSolid;
             }
         }
         else
