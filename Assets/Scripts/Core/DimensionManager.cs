@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections.Generic;
 
 public class DimensionManager : MonoBehaviour
@@ -6,11 +7,15 @@ public class DimensionManager : MonoBehaviour
     public static DimensionManager Instance { get; private set; }
 
     [Header("Dimension Settings")]
-    [SerializeField] private int currentDimension = 0;
     [SerializeField] private int maxDimensions = 4;
-    [SerializeField] private float dimensionChangeDelay = 0.5f;
-    
-    private bool canChangeDimension = true;
+    [SerializeField] private float transitionDuration = 0.5f;
+    [SerializeField] private Color[] dimensionColors;
+
+    public int MaxDimensions => maxDimensions;
+    public UnityEvent<int> onDimensionChanged = new UnityEvent<int>();
+
+    private int currentDimension = 0;
+    private int availableDimensions = 1;
     private List<IDimensionAware> dimensionAwareObjects = new List<IDimensionAware>();
 
     private void Awake()
@@ -26,58 +31,43 @@ public class DimensionManager : MonoBehaviour
         }
     }
 
-    public void RegisterDimensionAware(IDimensionAware obj)
+    public void RegisterDimensionAware(IDimensionAware aware)
     {
-        if (!dimensionAwareObjects.Contains(obj))
+        if (!dimensionAwareObjects.Contains(aware))
         {
-            dimensionAwareObjects.Add(obj);
-            obj.OnDimensionChanged(currentDimension);
+            dimensionAwareObjects.Add(aware);
+            aware.OnDimensionChanged(currentDimension);
         }
     }
 
-    public void UnregisterDimensionAware(IDimensionAware obj)
+    public void UnregisterDimensionAware(IDimensionAware aware)
     {
-        dimensionAwareObjects.Remove(obj);
+        dimensionAwareObjects.Remove(aware);
     }
 
-    public void ChangeDimension(int newDimension)
+    public void ChangeDimension(int dimensionId)
     {
-        if (!canChangeDimension || newDimension == currentDimension || 
-            newDimension < 0 || newDimension >= maxDimensions)
-            return;
-
-        StartCoroutine(ChangeDimensionRoutine(newDimension));
-    }
-
-    private System.Collections.IEnumerator ChangeDimensionRoutine(int newDimension)
-    {
-        canChangeDimension = false;
-
-        // Geçiş efektini başlat
-        TransitionManager.Instance.PlayDimensionTransition(newDimension);
-        AudioManager.Instance.PlaySound($"DimensionChange_{newDimension}");
-
-        yield return new WaitForSeconds(dimensionChangeDelay);
-
-        // Boyut değişimini uygula
-        currentDimension = newDimension;
-        foreach (var obj in dimensionAwareObjects)
+        if (dimensionId >= 0 && dimensionId < availableDimensions)
         {
-            obj.OnDimensionChanged(currentDimension);
+            currentDimension = dimensionId;
+            
+            foreach (var aware in dimensionAwareObjects)
+            {
+                if (aware != null)
+                {
+                    aware.OnDimensionChanged(currentDimension);
+                }
+            }
+
+            onDimensionChanged?.Invoke(currentDimension);
+            AudioManager.Instance.PlaySound($"DimensionChange_{currentDimension}");
         }
-
-        // UI'ı güncelle
-        UIManager.Instance.UpdateDimensionDisplay(currentDimension);
-
-        yield return new WaitForSeconds(dimensionChangeDelay);
-        
-        canChangeDimension = true;
     }
 
     public void SetAvailableDimensions(int count)
     {
-        maxDimensions = Mathf.Clamp(count, 1, 4);
-        if (currentDimension >= maxDimensions)
+        availableDimensions = Mathf.Clamp(count, 1, maxDimensions);
+        if (currentDimension >= availableDimensions)
         {
             ChangeDimension(0);
         }
@@ -86,6 +76,15 @@ public class DimensionManager : MonoBehaviour
     public int GetCurrentDimension()
     {
         return currentDimension;
+    }
+
+    public Color GetDimensionColor(int dimensionId)
+    {
+        if (dimensionId >= 0 && dimensionId < dimensionColors.Length)
+        {
+            return dimensionColors[dimensionId];
+        }
+        return Color.white;
     }
 }
 
