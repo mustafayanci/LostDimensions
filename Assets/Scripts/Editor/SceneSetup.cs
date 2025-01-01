@@ -1,43 +1,126 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 
-public class SceneSetup : Editor
+public class SceneSetup
 {
-    [MenuItem("Game/Setup Initial Scenes")]
-    public static void SetupInitialScenes()
+    [MenuItem("Tools/Setup/Create Initial Scene")]
+    public static void CreateMainScene()
     {
-        // MainMenu sahnesini oluştur
-        var mainMenuScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
-        var gameCore = PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Core/GameCore.prefab"));
-        EditorSceneManager.SaveScene(mainMenuScene, "Assets/Scenes/MainMenu.unity");
+        // Save current scene
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            return;
 
-        // Level1 sahnesini oluştur
-        var level1Scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
-        CreateBasicLevel();
-        EditorSceneManager.SaveScene(level1Scene, "Assets/Scenes/Level1.unity");
+        // Create and save new scene
+        string scenePath = "Assets/Scenes/MainScene.unity";
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects);
+        
+        // Create essential objects
+        CreateGameManagers();
+        CreatePlayer();
+        CreateEnvironment();
+        SetupCamera();
+        SetupUI();
 
-        // Build settings'e sahneleri ekle
+        // Save scene
+        EnsureDirectoryExists("Assets/Scenes");
+        EditorSceneManager.SaveScene(scene, scenePath);
+        
+        // Set as first scene in build settings
         EditorBuildSettings.scenes = new EditorBuildSettingsScene[]
         {
-            new EditorBuildSettingsScene("Assets/Scenes/MainMenu.unity", true),
-            new EditorBuildSettingsScene("Assets/Scenes/Level1.unity", true)
+            new EditorBuildSettingsScene(scenePath, true)
         };
 
-        Debug.Log("Initial scenes created successfully!");
+        Debug.Log("Main scene created successfully!");
     }
 
-    private static void CreateBasicLevel()
+    private static void CreateGameManagers()
     {
-        // Temel platform oluştur
-        var platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        platform.transform.localScale = new Vector3(20f, 1f, 1f);
-        platform.transform.position = new Vector3(0f, -2f, 0f);
-        platform.name = "Ground";
+        var managers = new GameObject("--- MANAGERS ---");
+        
+        // Game Manager
+        var gameManager = new GameObject("GameManager");
+        gameManager.AddComponent<GameManager>();
+        gameManager.transform.SetParent(managers.transform);
 
-        // Player spawn noktası oluştur
-        var spawnPoint = new GameObject("PlayerSpawnPoint");
-        spawnPoint.transform.position = new Vector3(0f, 0f, 0f);
+        // Audio Manager
+        var audioManager = new GameObject("AudioManager");
+        audioManager.AddComponent<AudioManager>();
+        audioManager.transform.SetParent(managers.transform);
+
+        // Level Manager
+        var levelManager = new GameObject("LevelManager");
+        levelManager.AddComponent<LevelManager>();
+        levelManager.transform.SetParent(managers.transform);
+
+        // Dimension Manager
+        var dimensionManager = new GameObject("DimensionManager");
+        dimensionManager.AddComponent<DimensionManager>();
+        dimensionManager.transform.SetParent(managers.transform);
+    }
+
+    private static void CreatePlayer()
+    {
+        var player = new GameObject("Player");
+        player.tag = "Player";
+        player.AddComponent<PlayerController>();
+        player.AddComponent<PlayerHealth>();
+        player.AddComponent<PlayerCombat>();
+        player.AddComponent<PlayerAnimator>();
+        player.AddComponent<BoxCollider2D>();
+        player.AddComponent<Rigidbody2D>().gravityScale = 3f;
+
+        // Add sprite renderer
+        var spriteRenderer = player.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Player/player_idle.png");
+    }
+
+    private static void CreateEnvironment()
+    {
+        var environment = new GameObject("--- LEVEL ---");
+        
+        // Create ground
+        var ground = new GameObject("Ground");
+        ground.transform.SetParent(environment.transform);
+        ground.AddComponent<BoxCollider2D>();
+        var groundSprite = ground.AddComponent<SpriteRenderer>();
+        groundSprite.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Environment/ground.png");
+        ground.transform.position = new Vector3(0, -4, 0);
+        ground.transform.localScale = new Vector3(20, 1, 1);
+    }
+
+    private static void SetupCamera()
+    {
+        var mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            mainCamera.transform.position = new Vector3(0, 0, -10);
+            mainCamera.backgroundColor = new Color(0.4f, 0.6f, 0.9f); // Light blue
+        }
+    }
+
+    private static void SetupUI()
+    {
+        TransitionSetup.SetupTransition();
+    }
+
+    private static void EnsureDirectoryExists(string path)
+    {
+        if (!AssetDatabase.IsValidFolder(path))
+        {
+            string[] folders = path.Split('/');
+            string currentPath = folders[0];
+            for (int i = 1; i < folders.Length; i++)
+            {
+                string parentPath = currentPath;
+                currentPath = $"{currentPath}/{folders[i]}";
+                if (!AssetDatabase.IsValidFolder(currentPath))
+                {
+                    AssetDatabase.CreateFolder(parentPath, folders[i]);
+                }
+            }
+        }
     }
 } 

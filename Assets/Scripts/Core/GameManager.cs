@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -74,5 +75,13 @@ public class GameManager : MonoBehaviour
             ResumeGame();
         else
             PauseGame();
+    }
+
+    private void Start()
+    {
+        if (SceneManager.GetActiveScene().name == "MainScene")
+        {
+            LevelManager.Instance.LoadFirstLevel();
+        }
     }
 } 
