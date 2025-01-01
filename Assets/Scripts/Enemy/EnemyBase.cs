@@ -1,83 +1,62 @@
 using UnityEngine;
 
-public abstract class EnemyBase : MonoBehaviour, IDimensionAware
+public abstract class EnemyBase : MonoBehaviour
 {
-    [Header("Base Enemy Settings")]
+    [Header("Base Settings")]
     [SerializeField] protected float health = 100f;
-    [SerializeField] protected float damage = 10f;
-    [SerializeField] protected float detectionRange = 10f;
-    [SerializeField] protected int[] activeDimensions;
+    [SerializeField] protected float damage = 20f;
+    [SerializeField] protected float detectionRange = 5f;
+    [SerializeField] protected LayerMask playerLayer;
 
+    protected bool isDead;
+    protected bool isActive = true;
     protected Transform player;
     protected Rigidbody2D rb;
-    protected bool isActive = true;
-    protected bool isDead;
 
     protected virtual void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-        DimensionManager.Instance.RegisterDimensionAware(this);
     }
 
     protected virtual void Update()
     {
-        if (!isActive || isDead || player == null) return;
+        if (isDead || !isActive || player == null) return;
 
-        float distance = Vector2.Distance(transform.position, player.position);
-        if (distance <= detectionRange)
+        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+        if (distanceToPlayer <= detectionRange)
         {
             OnPlayerDetected();
         }
-        else
-        {
-            OnPlayerLost();
-        }
     }
-
-    protected abstract void OnPlayerDetected();
-    protected virtual void OnPlayerLost() { }
 
     public virtual void TakeDamage(float amount)
     {
+        if (isDead) return;
+
         health -= amount;
-        if (health <= 0 && !isDead)
+        if (health <= 0)
         {
             Die();
+        }
+        else
+        {
+            AudioManager.Instance.PlaySound("EnemyHit");
         }
     }
 
     protected virtual void Die()
     {
         isDead = true;
-        // Ölüm efektleri ve sesleri burada çalınacak
         AudioManager.Instance.PlaySound("EnemyDeath");
-        Destroy(gameObject);
+        Destroy(gameObject, 1f);
     }
 
-    public virtual void OnDimensionChanged(int dimensionId)
-    {
-        isActive = System.Array.Exists(activeDimensions, d => d == dimensionId);
-        gameObject.SetActive(isActive);
-    }
+    protected abstract void OnPlayerDetected();
 
-    protected virtual void OnCollisionEnter2D(Collision2D collision)
+    protected virtual void OnDrawGizmos()
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            var playerHealth = collision.gameObject.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(damage);
-            }
-        }
-    }
-
-    protected virtual void OnDestroy()
-    {
-        if (DimensionManager.Instance != null)
-        {
-            DimensionManager.Instance.UnregisterDimensionAware(this);
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 } 

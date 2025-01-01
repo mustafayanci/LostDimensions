@@ -36,6 +36,17 @@ public class PatrollingEnemy : EnemyBase
             return;
         }
 
+        Patrol();
+    }
+
+    protected override void OnPlayerDetected()
+    {
+        // Player tespit edildiğinde yapılacak işlemler
+        // Örneğin: Devriye gezmeyi durdur ve oyuncuya saldır
+    }
+
+    private void Patrol()
+    {
         Vector2 targetPoint = patrolPoints[currentPointIndex].position;
         Vector2 moveDirection = (targetPoint - (Vector2)transform.position).normalized;
         
